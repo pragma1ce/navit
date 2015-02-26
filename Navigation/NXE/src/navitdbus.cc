@@ -27,6 +27,10 @@ struct NavitDBusObjectProxy : public ::DBus::InterfaceProxy, public ::DBus::Obje
     void zoomBy(int factor) {
         DBus::call("zoom", *this, factor);
     }
+
+    void moveBy(double x, double y) {
+        DBus::call("move",*this, x, y);
+    }
 };
 
 struct NavitDBusPrivate {

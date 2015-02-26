@@ -10,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/include/for_each.hpp>
+#include <boost/signals2/signal.hpp>
 
 namespace NXE {
 const std::uint16_t timeout = 2;
@@ -18,14 +19,29 @@ struct NavitControllerPrivate {
     NavitController* q;
     std::thread m_retriggerThread;
     bool m_isRunning = false;
+    boost::signals2::signal<void (const std::string &) > successSignal;
     map_type m{ boost::fusion::make_pair<MoveByMessage>("moveBy"),
                 boost::fusion::make_pair<ZoomByMessage>("zoomBy"),
-                boost::fusion::make_pair<ZoomMessage>("zoom") };
+                boost::fusion::make_pair<ZoomMessage>("zoom"),
+                boost::fusion::make_pair<PositionMessage>("position") };
 
     map_cb_type cb{
-        boost::fusion::make_pair<MoveByMessage>([](const std::string& data) {}),
-        boost::fusion::make_pair<ZoomByMessage>([](const std::string& data) {}),
-        boost::fusion::make_pair<ZoomMessage>([](const std::string& data) {}),
+        boost::fusion::make_pair<MoveByMessage>([this](const std::string& data) {
+            q->moveBy(0,0);
+        }),
+
+        boost::fusion::make_pair<ZoomByMessage>([this](const std::string& data) {
+            int factor = boost::lexical_cast<int>(data);
+            q->zoomBy(factor);
+        }),
+
+        boost::fusion::make_pair<ZoomMessage>([this](const std::string& data) {
+            int zoomValue = q->zoom();
+        }),
+
+        boost::fusion::make_pair<PositionMessage>([this](const std::string& data) {
+            q->positon();
+        }),
     };
 
     template <typename T>
@@ -87,6 +103,11 @@ NavitController::~NavitController()
 {
 }
 
+void NavitController::positon()
+{
+    // TODO: Ask for LBS position
+}
+
 void NavitController::tryStart()
 {
     nDebug() << "Trying to start IPC Navit controller";
@@ -116,6 +137,11 @@ void NavitController::handleMessage(JSONMessage msg)
     {
         nFatal() << "Unable to call IPC. Error= " << ex.what();
     }
+}
+
+void NavitController::addListener(const NavitController::Callback_type &cb)
+{
+    d->successSignal.connect(cb);
 }
 
 } // namespace NXE

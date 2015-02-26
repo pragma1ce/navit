@@ -42,6 +42,7 @@ NXEInstance::NXEInstance(std::weak_ptr<NavitProcess> process, std::weak_ptr<Navi
         navi->setProgramPath(path);
     }
 
+    nDebug() << "Connecting to navitprocess signals";
 }
 
 NXEInstance::~NXEInstance()

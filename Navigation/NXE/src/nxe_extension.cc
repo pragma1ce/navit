@@ -64,25 +64,3 @@ common::Instance *NXExtension::CreateInstance()
     nDebug() << "Created instance. Ptr= " << static_cast<void*>(d->instance);
     return d->instance;
 }
-
-//void NXExtension::OnShutdown(XW_Extension xw_extension)
-//{
-//    nDebug() << "On Shutdown " << xw_extension;
-//    delete g_extension;
-//}
-
-//void NXExtension::OnInstanceCreated(XW_Instance xw_instance)
-//{
-//    nDebug() << "Instance created " << xw_instance;
-//    if(g_extension) {
-//        g_extension->d->instance->Initialize();
-//    }
-//}
-
-//void NXExtension::OnInstanceDestroyed(XW_Instance xw_instance)
-//{
-//    nDebug() << "Instance destroyed " << xw_instance;
-//    if (g_extension) {
-//        g_extension->d->instance.reset();
-//    }
-//}

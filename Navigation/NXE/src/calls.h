@@ -17,9 +17,10 @@
 struct MoveByMessage {};
 struct ZoomByMessage {};
 struct ZoomMessage {};
+struct PositionMessage {};
 
 // Container of all registered messages
-typedef boost::mpl::vector<MoveByMessage, ZoomByMessage, ZoomMessage> Messages_type;
+typedef boost::mpl::vector<MoveByMessage, ZoomByMessage, ZoomMessage, PositionMessage> Messages_type;
 typedef std::function<void (const std::string &data)> JSONMessageParser_type;
 
 template<typename T>
