@@ -12,6 +12,8 @@
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/signals2/signal.hpp>
 
+namespace bpt = boost::property_tree;
+
 namespace NXE {
 const std::uint16_t timeout = 2;
 
@@ -26,26 +28,41 @@ struct NavitControllerPrivate {
                 boost::fusion::make_pair<PositionMessage>("position") };
 
     map_cb_type cb{
-        boost::fusion::make_pair<MoveByMessage>([this](const std::string& data) {
-            q->moveBy(0,0);
+        boost::fusion::make_pair<MoveByMessage>([this](const bpt::ptree& data) {
+            if (data.empty()) {
+                // TODO: Change exception
+                throw std::runtime_error("Unable to parse");
+            }
+
+            const int x = data.get<int>("x");
+            const int y = data.get<int>("y");
+            nDebug() << "IPC: Move by " << x << y;
+            q->moveBy(x,y);
+
+            // TODO: proper success signal
+            successSignal("");
         }),
 
-        boost::fusion::make_pair<ZoomByMessage>([this](const std::string& data) {
-            int factor = boost::lexical_cast<int>(data);
+        boost::fusion::make_pair<ZoomByMessage>([this](const bpt::ptree& data) {
+            int factor = data.get<int>("factor");
             q->zoomBy(factor);
         }),
 
-        boost::fusion::make_pair<ZoomMessage>([this](const std::string& data) {
+        boost::fusion::make_pair<ZoomMessage>([this](const bpt::ptree& data) {
             int zoomValue = q->zoom();
+            // TODO: proper success signal
+            successSignal("");
         }),
 
-        boost::fusion::make_pair<PositionMessage>([this](const std::string& data) {
+        boost::fusion::make_pair<PositionMessage>([this](const bpt::ptree& data) {
             q->positon();
+            // TODO: proper success signal
+            successSignal("");
         }),
     };
 
     template <typename T>
-    void handleMessage(const std::string& data)
+    void handleMessage(const bpt::ptree & data)
     {
         auto fn = boost::fusion::at_key<T>(cb);
         fn(data);
@@ -78,7 +95,8 @@ filter<Pred, Fun> make_filter(Pred p, const Fun& f)
 }
 
 struct fun {
-    fun(NXE::NavitControllerPrivate* d, const std::string& data)
+    fun(NXE::NavitControllerPrivate* d, const bpt::ptree & data)
+
         : _d(d)
         , _data(data)
     {
@@ -90,7 +108,7 @@ struct fun {
     }
 
     NXE::NavitControllerPrivate* _d;
-    const std::string& _data;
+    const bpt::ptree & _data;
 };
 
 NavitController::NavitController()
@@ -116,26 +134,21 @@ void NavitController::tryStart()
 
 void NavitController::handleMessage(JSONMessage msg)
 {
-    nDebug() << "Handling message " << msg.call;
     bool bCalled = false;
-    try {
-        const std::string& val = msg.data.get_value_or("");
-        boost::fusion::for_each(d->m, make_filter([msg, &bCalled](const std::string& str) -> bool {
-            if (str == msg.call)  {
-                bCalled = true;
-                return true;
-            }
-            return false;
-                                                      },
-                                                      fun(d.get(), val)));
-
-        if (!bCalled) {
-            nFatal() << "Unable to call " << msg.call;
+    const boost::property_tree::ptree& val = msg.data.get_value_or(boost::property_tree::ptree());
+    nDebug() << "Handling message " << msg.call;
+    boost::fusion::for_each(d->m, make_filter([msg, &bCalled](const std::string& str) -> bool {
+        if (str == msg.call)  {
+            bCalled = true;
+            return true;
         }
-    }
-    catch (const std::exception &ex)
-    {
-        nFatal() << "Unable to call IPC. Error= " << ex.what();
+        return false;
+                                                  },
+                                                  fun(d.get(), val)));
+
+    if (!bCalled) {
+        nFatal() << "Unable to call " << msg.call;
+        throw std::runtime_error("No parser found");
     }
 }
 

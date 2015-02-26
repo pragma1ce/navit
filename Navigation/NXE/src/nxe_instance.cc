@@ -14,21 +14,29 @@ namespace NXE {
 struct NXEInstancePrivate {
     std::weak_ptr<NavitProcess> navitProcess;
     std::weak_ptr<NavitController> controller;
+    NXEInstance *q;
     Settings settings;
     std::vector<NXEInstance::MessageCb_type> callbacks;
 
-    void postMessage(NXEInstance* inst, const std::string& message)
+    void postMessage(const std::string& message)
     {
-        inst->PostMessage(message.c_str());
+        // This is xwalk posting mechanism
+        q->PostMessage(message.c_str());
 
+        // This is our internal post message
         std::for_each(callbacks.begin(), callbacks.end(), [&message](const NXEInstance::MessageCb_type& callback) {
             callback(message);
         });
     }
+
+    void navitMsgCallback(const std::string &response) {
+        nDebug() << "Callback received posting response " << response;
+        postMessage(response);
+    }
 };
 
 NXEInstance::NXEInstance(std::weak_ptr<NavitProcess> process, std::weak_ptr<NavitController> controller)
-    : d(new NXEInstancePrivate{ process, controller })
+    : d(new NXEInstancePrivate{ process, controller, this })
 {
     using SettingsTags::Navit::Path;
 
@@ -43,6 +51,8 @@ NXEInstance::NXEInstance(std::weak_ptr<NavitProcess> process, std::weak_ptr<Navi
     }
 
     nDebug() << "Connecting to navitprocess signals";
+    auto bound = std::bind(&NXEInstancePrivate::navitMsgCallback, d.get(), std::placeholders::_1);
+    d->controller.lock()->addListener(bound);
 }
 
 NXEInstance::~NXEInstance()
@@ -75,14 +85,15 @@ void NXEInstance::HandleMessage(const char* msg)
     boost::algorithm::erase_all(message, "\n");
     boost::algorithm::erase_all(message, "\t");
 
-    nDebug() << "Handling message " << msg;
+    nDebug() << "Handling message " << message;
 
     if (!naviProcess->isRunning()) {
         if (!naviProcess->start()) {
-            d->postMessage(this,"error");
+            d->postMessage("error");
         }
     }
 
+    // Eat all exceptions!
     try {
         auto navit = d->controller.lock();
         assert(navit);
@@ -91,12 +102,13 @@ void NXEInstance::HandleMessage(const char* msg)
     }
     catch (const std::exception& ex) {
         nFatal() << "Unable to parse message, posting error= " << ex.what();
-        d->postMessage(this, ex.what());
+        d->postMessage(ex.what());
     }
 }
 
 void NXEInstance::registerMessageCallback(const NXEInstance::MessageCb_type& cb)
 {
+    nDebug() << "registering cb";
     d->callbacks.push_back(cb);
 }
 

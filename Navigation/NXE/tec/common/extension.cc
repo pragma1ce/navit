@@ -198,7 +198,7 @@ Instance::~Instance() {
 void Instance::PostMessage(const char* msg) {
   if (!xw_instance_) {
     std::cerr << "Ignoring PostMessage() in the constructor or after the "
-              << "instance was destroyed.";
+              << "instance was destroyed." << std::endl;
     return;
   }
   g_messaging->PostMessage(xw_instance_, msg);

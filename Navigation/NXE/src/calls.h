@@ -12,8 +12,9 @@
 #include <boost/fusion/include/as_map.hpp>
 #include <boost/fusion/sequence/intrinsic.hpp>
 #include <boost/fusion/include/mpl.hpp>
+#include <boost/property_tree/ptree.hpp>
 
-// All messages
+// Messages handled by application
 struct MoveByMessage {};
 struct ZoomByMessage {};
 struct ZoomMessage {};
@@ -21,7 +22,7 @@ struct PositionMessage {};
 
 // Container of all registered messages
 typedef boost::mpl::vector<MoveByMessage, ZoomByMessage, ZoomMessage, PositionMessage> Messages_type;
-typedef std::function<void (const std::string &data)> JSONMessageParser_type;
+typedef std::function<void (const boost::property_tree::ptree &data)> JSONMessageParser_type;
 
 template<typename T>
 struct make_sig_pair
