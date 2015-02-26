@@ -20,7 +20,7 @@ if(NOT DISABLE_TESTS)
     include_directories(${CMAKE_SOURCE_DIR}/3rdParty/gmock/include)
 endif()
 
-set(boost_components system filesystem thread)
+set(boost_components system filesystem thread chrono)
 
 # find Boost
 find_package(Boost 1.51.0 EXACT REQUIRED COMPONENTS ${boost_components})
