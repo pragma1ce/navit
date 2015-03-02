@@ -23,7 +23,8 @@ struct JSONMessage {
 namespace JSONUtils {
     JSONMessage deserialize(std::string buff);
     std::string serialize(JSONMessage json);
-    std::string serialize(std::uint32_t id, const std::string &call, int ec = 0, boost::property_tree::ptree data = boost::property_tree::ptree());
+    std::string serialize(std::uint32_t id, const std::string& call, int ec = 0,
+                          boost::property_tree::ptree data = boost::property_tree::ptree());
 }
 }
 

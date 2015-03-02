@@ -15,14 +15,14 @@ std::string JSONUtils::serialize(NXE::JSONMessage json)
 {
     bpt::ptree tree;
     tree.put("id", json.id);
-    tree.put("call",json.call);
+    tree.put("call", json.call);
 
     if (json.errorCode) {
         tree.put("errorCode", json.errorCode.get());
     }
 
     if (json.data) {
-//        tree.put("data", json.data.get());
+        tree.put_child("data", json.data.value());
     }
 
     std::stringstream buff;
@@ -50,9 +50,8 @@ JSONMessage JSONUtils::deserialize(std::string buff)
                         data };
 }
 
-
-std::string NXE::JSONUtils::serialize(std::uint32_t id, const std::string &call, int ec, boost::property_tree::ptree data)
+std::string NXE::JSONUtils::serialize(std::uint32_t id, const std::string& call, int ec, boost::property_tree::ptree data)
 {
-    JSONMessage m {id, call, ec, data};
+    JSONMessage m{ id, call, ec, data };
     return serialize(m);
 }

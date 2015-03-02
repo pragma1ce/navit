@@ -26,6 +26,7 @@ set(NXE_SRCS
     nxe_extension.cc
     nxe_instance.cc
     navitprocess.h
+    navitipc.h
     navitprocessimpl.cc
     navitcontroller.cc
     calls.h

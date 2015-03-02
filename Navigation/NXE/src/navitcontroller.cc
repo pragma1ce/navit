@@ -23,7 +23,7 @@ struct NavitControllerPrivate {
     NavitController* q;
     std::thread m_retriggerThread;
     bool m_isRunning = false;
-    boost::signals2::signal<void (const std::string &) > successSignal;
+    boost::signals2::signal<void(const std::string&)> successSignal;
     map_type m{ boost::fusion::make_pair<MoveByMessage>("moveBy"),
                 boost::fusion::make_pair<ZoomByMessage>("zoomBy"),
                 boost::fusion::make_pair<ZoomMessage>("zoom"),
@@ -64,7 +64,7 @@ struct NavitControllerPrivate {
     };
 
     template <typename T>
-    void handleMessage(const bpt::ptree & data)
+    void handleMessage(const bpt::ptree& data)
     {
         auto fn = boost::fusion::at_key<T>(cb);
         fn(data);
@@ -97,12 +97,12 @@ filter<Pred, Fun> make_filter(Pred p, const Fun& f)
 }
 
 struct fun {
-    fun(NXE::NavitControllerPrivate* d, const bpt::ptree & data)
-
+    fun(NXE::NavitControllerPrivate* d, const bpt::ptree& data)
         : _d(d)
         , _data(data)
     {
     }
+
     template <class First, class Second>
     void operator()(boost::fusion::pair<First, Second>&) const
     {
@@ -110,11 +110,11 @@ struct fun {
     }
 
     NXE::NavitControllerPrivate* _d;
-    const bpt::ptree & _data;
+    const bpt::ptree& _data;
 };
 
 NavitController::NavitController(std::shared_ptr<NavitIPCInterface> ipc)
-    : d(new NavitControllerPrivate )
+    : d(new NavitControllerPrivate)
 {
     d->ipc = ipc;
     d->q = this;
@@ -146,8 +146,8 @@ void NavitController::handleMessage(JSONMessage msg)
             return true;
         }
         return false;
-                                                  },
-                                                  fun(d.get(), val)));
+                                              },
+                                              fun(d.get(), val)));
 
     if (!bCalled) {
         nFatal() << "Unable to call " << msg.call;
@@ -155,7 +155,7 @@ void NavitController::handleMessage(JSONMessage msg)
     }
 }
 
-void NavitController::addListener(const NavitController::Callback_type &cb)
+void NavitController::addListener(const NavitController::Callback_type& cb)
 {
     d->successSignal.connect(cb);
 }

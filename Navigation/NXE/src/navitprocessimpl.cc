@@ -48,10 +48,13 @@ bool NavitProcessImpl::start()
     nDebug() << "Starting navit process from " << command;
     bf::path exe = command;
 
+    boost::iostreams::file_descriptor_sink sink("/tmp/what.out");
     d->m_child = bp::execute(bp::initializers::run_exe(exe),
                                  bp::initializers::start_in_dir(d->m_programPath),
                                  bp::initializers::inherit_env(),
-                                 bp::initializers::set_on_error(d->m_lastError));
+                                 bp::initializers::set_on_error(d->m_lastError),
+                                 bp::initializers::bind_stdout(sink),
+                                 bp::initializers::bind_stderr(sink));
 
     return !d->m_lastError;
 }
