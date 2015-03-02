@@ -27,7 +27,7 @@ TEST_F(JSONParserTest, moveBy_message_with_args)
 TEST_F(JSONParserTest, moveBy_message_without_args)
 {
     const std::string incomingMessage = "{\"id\":0, \"call\":\"moveBy\"}";
-    EXPECT_NO_THROW(
+    EXPECT_ANY_THROW(
     NXE::JSONMessage msg = std::move(NXE::JSONUtils::deserialize(incomingMessage));
 
     EXPECT_EQ(msg.id, 0);

@@ -12,9 +12,15 @@
 namespace NXE {
 
 struct NXEInstancePrivate {
+
+    NXEInstancePrivate(std::weak_ptr<NavitProcess> p, std::weak_ptr<NavitIPCInterface> w, NXEInstance *qptr):
+        navitProcess(p),
+        q(qptr),
+        controller(w.lock())
+    {}
     std::weak_ptr<NavitProcess> navitProcess;
-    std::weak_ptr<NavitController> controller;
     NXEInstance *q;
+    NavitController controller;
     Settings settings;
     std::vector<NXEInstance::MessageCb_type> callbacks;
 
@@ -35,8 +41,8 @@ struct NXEInstancePrivate {
     }
 };
 
-NXEInstance::NXEInstance(std::weak_ptr<NavitProcess> process, std::weak_ptr<NavitController> controller)
-    : d(new NXEInstancePrivate{ process, controller, this })
+NXEInstance::NXEInstance(std::weak_ptr<NavitProcess> process, std::weak_ptr<NavitIPCInterface> ipc)
+    : d(new NXEInstancePrivate{ process, ipc, this })
 {
     using SettingsTags::Navit::Path;
 
@@ -52,7 +58,7 @@ NXEInstance::NXEInstance(std::weak_ptr<NavitProcess> process, std::weak_ptr<Navi
 
     nDebug() << "Connecting to navitprocess signals";
     auto bound = std::bind(&NXEInstancePrivate::navitMsgCallback, d.get(), std::placeholders::_1);
-    d->controller.lock()->addListener(bound);
+    d->controller.addListener(bound);
 }
 
 NXEInstance::~NXEInstance()
@@ -95,10 +101,8 @@ void NXEInstance::HandleMessage(const char* msg)
 
     // Eat all exceptions!
     try {
-        auto navit = d->controller.lock();
-        assert(navit);
-        navit->tryStart();
-        navit->handleMessage(JSONUtils::deserialize(message));
+        d->controller.tryStart();
+        d->controller.handleMessage(JSONUtils::deserialize(message));
     }
     catch (const std::exception& ex) {
         nFatal() << "Unable to parse message, posting error= " << ex.what();

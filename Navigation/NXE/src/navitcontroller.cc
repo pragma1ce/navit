@@ -1,4 +1,5 @@
 #include "navitcontroller.h"
+#include "navitipc.h"
 #include "log.h"
 
 #include <functional>
@@ -18,6 +19,7 @@ namespace NXE {
 const std::uint16_t timeout = 2;
 
 struct NavitControllerPrivate {
+    std::shared_ptr<NavitIPCInterface> ipc;
     NavitController* q;
     std::thread m_retriggerThread;
     bool m_isRunning = false;
@@ -37,7 +39,7 @@ struct NavitControllerPrivate {
             const int x = data.get<int>("x");
             const int y = data.get<int>("y");
             nDebug() << "IPC: Move by " << x << y;
-            q->moveBy(x,y);
+            ipc->moveBy(x,y);
 
             // TODO: proper success signal
             successSignal("");
@@ -45,11 +47,11 @@ struct NavitControllerPrivate {
 
         boost::fusion::make_pair<ZoomByMessage>([this](const bpt::ptree& data) {
             int factor = data.get<int>("factor");
-            q->zoomBy(factor);
+            ipc->zoomBy(factor);
         }),
 
         boost::fusion::make_pair<ZoomMessage>([this](const bpt::ptree& data) {
-            int zoomValue = q->zoom();
+            int zoomValue = ipc->zoom();
             // TODO: proper success signal
             successSignal("");
         }),
@@ -111,9 +113,10 @@ struct fun {
     const bpt::ptree & _data;
 };
 
-NavitController::NavitController()
-    : d(new NavitControllerPrivate)
+NavitController::NavitController(std::shared_ptr<NavitIPCInterface> ipc)
+    : d(new NavitControllerPrivate )
 {
+    d->ipc = ipc;
     d->q = this;
 }
 
@@ -129,7 +132,7 @@ void NavitController::positon()
 void NavitController::tryStart()
 {
     nDebug() << "Trying to start IPC Navit controller";
-    start();
+    d->ipc->start();
 }
 
 void NavitController::handleMessage(JSONMessage msg)

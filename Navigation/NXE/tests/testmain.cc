@@ -6,11 +6,9 @@
 struct TestListener : public ::testing::EmptyTestEventListener
 {
     void OnTestStart(const ::testing::TestInfo &info) override {
-        nDebug() << "Test " << info.name() << " started";
     }
 
     void OnTestEnd(const ::testing::TestInfo &info) override {
-        nDebug() << "Test " << info.name() << " finished";
     }
 };
 

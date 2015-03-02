@@ -1,5 +1,6 @@
 #include "nxe_extension.h"
 #include "nxe_instance.h"
+#include "navitipc.h"
 
 #include "navitprocessimpl.h"
 #include "navitdbus.h"
@@ -14,7 +15,7 @@ NXE::NXExtension* g_extension = nullptr;
 
 struct NXE::NXExtensionPrivate {
     std::shared_ptr<NavitProcess> navitProcess;
-    std::shared_ptr<NavitController> navitController;
+    std::shared_ptr<NavitIPCInterface> navitIPC;
 
     NXEInstance* instance = nullptr;
 };
@@ -56,10 +57,12 @@ common::Instance *NXExtension::CreateInstance()
 
         // Use proper DI here?
         d->navitProcess.reset(new NavitProcessImpl);
-        d->navitController.reset(new NavitDBus);
+        d->navitIPC.reset(new NavitDBus);
+//        d->navitController.reset (new NavitController { std::make_shared<NavitIPCInterface> { new NavitDBus } });
+//        d->navitController.reset(new NavitDBus);
     }
 
-    d->instance =  new NXEInstance(d->navitProcess, d->navitController);
+    d->instance =  new NXEInstance(d->navitProcess, d->navitIPC);
 
     nDebug() << "Created instance. Ptr= " << static_cast<void*>(d->instance);
     return d->instance;

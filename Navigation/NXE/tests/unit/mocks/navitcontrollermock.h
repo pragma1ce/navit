@@ -1,9 +1,9 @@
 #ifndef NAVITCONTROLLERMOCK_H
 #define NAVITCONTROLLERMOCK_H
 
-#include "navitcontroller.h"
+#include "navitipc.h"
 
-struct NavitControllerMock : public NXE::NavitController {
+struct NavitIPCMock : public NXE::NavitIPCInterface {
     GMOCK_METHOD0_(, , , start, void());
     GMOCK_METHOD0_(, , , stop, void());
     GMOCK_METHOD2_(, , , moveBy, void(double, double));

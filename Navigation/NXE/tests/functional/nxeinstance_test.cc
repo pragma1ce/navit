@@ -1,6 +1,7 @@
 #include "nxe_instance.h"
 #include "navitprocessimpl.h"
 #include "navitcontroller.h"
+#include "navitipc.h"
 #include "navitdbus.h"
 #include "testutils.h"
 
@@ -12,7 +13,8 @@
 struct NXEInstanceTest : public ::testing::Test {
 protected:
     std::shared_ptr<NXE::NavitProcess> np{ new NXE::NavitProcessImpl };
-    std::shared_ptr<NXE::NavitController> nc{ new NXE::NavitDBus };
+    std::shared_ptr<NXE::NavitIPCInterface> nc{ new NXE::NavitDBus };
+//    NXE::NavitController nc { std::make_shared<NXE::NavitIPCInterface>() };
     NXE::NXEInstance instance{ np, nc };
 
     static void SetUpTestCase()
