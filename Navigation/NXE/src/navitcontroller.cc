@@ -1,6 +1,7 @@
 #include "navitcontroller.h"
 #include "navitipc.h"
 #include "log.h"
+#include "calls.h"
 
 #include <functional>
 #include <map>
@@ -16,55 +17,59 @@
 namespace bpt = boost::property_tree;
 
 namespace NXE {
-const std::uint16_t timeout = 2;
 
 struct NavitControllerPrivate {
     std::shared_ptr<NavitIPCInterface> ipc;
     NavitController* q;
     std::thread m_retriggerThread;
     bool m_isRunning = false;
-    boost::signals2::signal<void(const std::string&)> successSignal;
+    boost::signals2::signal<void(const JSONMessage&)> successSignal;
     map_type m{ boost::fusion::make_pair<MoveByMessage>("moveBy"),
                 boost::fusion::make_pair<ZoomByMessage>("zoomBy"),
                 boost::fusion::make_pair<ZoomMessage>("zoom"),
                 boost::fusion::make_pair<PositionMessage>("position") };
 
     map_cb_type cb{
-        boost::fusion::make_pair<MoveByMessage>([this](const bpt::ptree& data) {
-            if (data.empty()) {
+        boost::fusion::make_pair<MoveByMessage>([this](const JSONMessage& message) {
+            if (message.data.empty()) {
                 // TODO: Change exception
                 throw std::runtime_error("Unable to parse");
             }
 
-            const int x = data.get<int>("x");
-            const int y = data.get<int>("y");
+            const int x = message.data.get<int>("x");
+            const int y = message.data.get<int>("y");
             nDebug() << "IPC: Move by " << x << y;
             ipc->moveBy(x,y);
 
             // TODO: proper success signal
-            successSignal("");
+            JSONMessage response {message.id, message.call};
+            successSignal(response);
         }),
 
-        boost::fusion::make_pair<ZoomByMessage>([this](const bpt::ptree& data) {
-            int factor = data.get<int>("factor");
+        boost::fusion::make_pair<ZoomByMessage>([this](const JSONMessage& message) {
+            nTrace() << "Calling zoomBy";
+            int factor = message.data.get<int>("factor");
             ipc->zoomBy(factor);
         }),
 
-        boost::fusion::make_pair<ZoomMessage>([this](const bpt::ptree& data) {
+        boost::fusion::make_pair<ZoomMessage>([this](const JSONMessage& message) {
             int zoomValue = ipc->zoom();
+            bpt::ptree values;
+            values.put("zoom", zoomValue);
+            JSONMessage response {message.id, message.call, "", values };
             // TODO: proper success signal
-            successSignal("");
+            successSignal(response);
         }),
 
-        boost::fusion::make_pair<PositionMessage>([this](const bpt::ptree& data) {
+        boost::fusion::make_pair<PositionMessage>([this](const JSONMessage& message) {
             q->positon();
             // TODO: proper success signal
-            successSignal("");
         }),
     };
 
+
     template <typename T>
-    void handleMessage(const bpt::ptree& data)
+    void handleMessage(const JSONMessage& data)
     {
         auto fn = boost::fusion::at_key<T>(cb);
         fn(data);
@@ -97,7 +102,7 @@ filter<Pred, Fun> make_filter(Pred p, const Fun& f)
 }
 
 struct fun {
-    fun(NXE::NavitControllerPrivate* d, const bpt::ptree& data)
+    fun(NXE::NavitControllerPrivate* d, const JSONMessage& data)
         : _d(d)
         , _data(data)
     {
@@ -110,7 +115,7 @@ struct fun {
     }
 
     NXE::NavitControllerPrivate* _d;
-    const bpt::ptree& _data;
+    const JSONMessage& _data;
 };
 
 NavitController::NavitController(std::shared_ptr<NavitIPCInterface> ipc)
@@ -135,10 +140,9 @@ void NavitController::tryStart()
     d->ipc->start();
 }
 
-void NavitController::handleMessage(JSONMessage msg)
+void NavitController::handleMessage(const JSONMessage &msg)
 {
     bool bCalled = false;
-    const boost::property_tree::ptree& val = msg.data.get_value_or(boost::property_tree::ptree());
     nDebug() << "Handling message " << msg.call;
     boost::fusion::for_each(d->m, make_filter([msg, &bCalled](const std::string& str) -> bool {
         if (str == msg.call)  {
@@ -147,7 +151,7 @@ void NavitController::handleMessage(JSONMessage msg)
         }
         return false;
                                               },
-                                              fun(d.get(), val)));
+                                              fun(d.get(), msg)));
 
     if (!bCalled) {
         nFatal() << "Unable to call " << msg.call;

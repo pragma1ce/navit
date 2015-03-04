@@ -1,7 +1,5 @@
-
 #include <gtest/gtest.h>
 #include "log.h"
-
 
 struct TestListener : public ::testing::EmptyTestEventListener
 {
@@ -14,8 +12,15 @@ struct TestListener : public ::testing::EmptyTestEventListener
 
 int main(int argc, char* argv[])
 {
+    const std::vector<std::string> arguments(argv + 1, argv + argc);
+
+    bool debug = std::find(arguments.begin(), arguments.end(), "--debug") != arguments.end();
+
     auto logger = spdlog::stdout_logger_mt("nxe_logger");
-    logger->set_level(spdlog::level::debug);
+    if (debug)
+        logger->set_level(spdlog::level::debug);
+    else
+        logger->set_level(spdlog::level::err);
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::UnitTest::GetInstance()->listeners().Append(new TestListener);
     return RUN_ALL_TESTS();

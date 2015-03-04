@@ -13,31 +13,41 @@ namespace NXE {
 
 struct NXEInstancePrivate {
 
-    NXEInstancePrivate(std::weak_ptr<NavitProcess> p, std::weak_ptr<NavitIPCInterface> w, NXEInstance *qptr):
-        navitProcess(p),
-        q(qptr),
-        controller(w.lock())
-    {}
+    NXEInstancePrivate(std::weak_ptr<NavitProcess> p, std::weak_ptr<NavitIPCInterface> w, NXEInstance* qptr)
+        : navitProcess(p)
+        , q(qptr)
+        , controller(w.lock())
+    {
+    }
     std::weak_ptr<NavitProcess> navitProcess;
-    NXEInstance *q;
+    NXEInstance* q;
     NavitController controller;
     Settings settings;
     std::vector<NXEInstance::MessageCb_type> callbacks;
+    std::map<std::string, std::chrono::time_point<std::chrono::high_resolution_clock> > timers;
 
-    void postMessage(const std::string& message)
+    void postMessage(const JSONMessage& message)
     {
+        const std::string rsp = JSONUtils::serialize(message);
         // This is xwalk posting mechanism
-        q->PostMessage(message.c_str());
+        q->PostMessage(rsp.c_str());
 
         // This is our internal post message
-        std::for_each(callbacks.begin(), callbacks.end(), [&message](const NXEInstance::MessageCb_type& callback) {
-            callback(message);
+        std::for_each(callbacks.begin(), callbacks.end(), [&rsp](const NXEInstance::MessageCb_type& callback) {
+            callback(rsp);
         });
     }
 
-    void navitMsgCallback(const std::string &response) {
-        nDebug() << "Callback received posting response " << response;
+    void navitMsgCallback(const JSONMessage& response)
+    {
         postMessage(response);
+        auto it = timers.find(response.call);
+        if (it != timers.end()) {
+            auto now = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> diff = now - timers[response.call];
+            nInfo() << "Parsing " << response.call << " took " << diff.count() << " ms";
+            timers.erase(it);
+        }
     }
 };
 
@@ -95,24 +105,39 @@ void NXEInstance::HandleMessage(const char* msg)
 
     if (!naviProcess->isRunning()) {
         if (!naviProcess->start()) {
-            d->postMessage("error");
+            d->postMessage(JSONMessage{ 0, "" });
         }
     }
 
     // Eat all exceptions!
     try {
-        d->controller.tryStart();
-        d->controller.handleMessage(JSONUtils::deserialize(message));
+        NXE::JSONMessage jsonMsg = JSONUtils::deserialize(message);
+
+        try {
+            d->controller.tryStart();
+            d->timers[jsonMsg.call] = std::chrono::high_resolution_clock::now();
+            d->controller.handleMessage(jsonMsg);
+        }
+        catch (const std::exception& ex) {
+            nFatal() << "Unable to handle message " << jsonMsg.call << ", error=" << ex.what();
+            NXE::JSONMessage error{ jsonMsg.id, jsonMsg.call, " some error" };
+            auto it = d->timers.find(jsonMsg.call);
+            if (it != d->timers.end()) {
+                d->timers.erase(it);
+            }
+            d->postMessage(error);
+        }
     }
     catch (const std::exception& ex) {
+        NXE::JSONMessage error{ 0, "", 0 };
         nFatal() << "Unable to parse message, posting error= " << ex.what();
-        d->postMessage(ex.what());
+        d->postMessage(error);
     }
 }
 
 void NXEInstance::registerMessageCallback(const NXEInstance::MessageCb_type& cb)
 {
-    nDebug() << "registering cb";
+    nTrace() << "registering cb";
     d->callbacks.push_back(cb);
 }
 

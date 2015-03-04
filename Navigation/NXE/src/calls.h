@@ -1,6 +1,8 @@
 #ifndef CALLS_H
 #define CALLS_H
 
+#include "jsonmessage.h"
+
 #include <string>
 #include <map>
 #include <functional>
@@ -22,7 +24,7 @@ struct PositionMessage {};
 
 // Container of all registered messages
 typedef boost::mpl::vector<MoveByMessage, ZoomByMessage, ZoomMessage, PositionMessage> Messages_type;
-typedef std::function<void (const boost::property_tree::ptree &data)> JSONMessageParser_type;
+typedef std::function<void (const NXE::JSONMessage &data)> JSONMessageParser_type;
 
 template<typename T>
 struct make_sig_pair

@@ -28,9 +28,8 @@ void TestUtils::createNXEConfFile()
 
 std::string TestUtils::zoomByMessage(int factor)
 {
-//    std::string data = boost::lexical_cast<std::string>(factor);
     boost::property_tree::ptree p;
     p.put("factor", factor);
-    NXE::JSONMessage msg {1, "zoomBy", 0,p };
+    NXE::JSONMessage msg {1, "zoomBy"};
     return NXE::JSONUtils::serialize(msg);
 }

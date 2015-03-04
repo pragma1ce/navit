@@ -12,7 +12,7 @@ class NavitIPCInterface;
 class NavitController
 {
 public:
-    typedef std::function<void (const std::string &) > Callback_type;
+    typedef std::function<void (const JSONMessage &) > Callback_type;
 
     // basic ctor
     NavitController(std::shared_ptr<NavitIPCInterface> ipc );
@@ -23,7 +23,7 @@ public:
 
     //! Common functions
     void tryStart() ;
-    void handleMessage(JSONMessage msg);
+    void handleMessage(const JSONMessage &msg);
     void addListener(const Callback_type &cb);
 
 private:

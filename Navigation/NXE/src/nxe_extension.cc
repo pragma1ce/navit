@@ -24,8 +24,17 @@ common::Extension* CreateExtension()
 {
     Settings s;
     const std::string path = s.get<SettingsTags::FileLog>();
-    spdlog::rotating_logger_mt("nxe_logger", path, 1048576 * 5, 3, true);
-    spdlog::set_level(spdlog::level::debug);
+    const std::string level = s.get<SettingsTags::LogLevel>();
+    std::shared_ptr<spdlog::sinks::sink> rot { new spdlog::sinks::rotating_file_sink_mt ("nxe_logger", path,1048576  * 5, 3, true ) };
+    spdlog::create("nxe_logger", {rot});
+
+    if (level == "debug") {
+        spdlog::set_level(spdlog::level::debug);
+    } else if (level == "warn") {
+        spdlog::set_level(spdlog::level::warn);
+    } else {
+        spdlog::set_level(spdlog::level::err);
+    }
     g_extension = new NXExtension();
     nInfo() << "Plugin loaded. Addr" << static_cast<void*>(g_extension);
     return g_extension;
@@ -58,8 +67,6 @@ common::Instance *NXExtension::CreateInstance()
         // Use proper DI here?
         d->navitProcess.reset(new NavitProcessImpl);
         d->navitIPC.reset(new NavitDBus);
-//        d->navitController.reset (new NavitController { std::make_shared<NavitIPCInterface> { new NavitDBus } });
-//        d->navitController.reset(new NavitDBus);
     }
 
     d->instance =  new NXEInstance(d->navitProcess, d->navitIPC);

@@ -32,7 +32,7 @@ TEST_F(JSONParserTest, moveBy_message_without_args)
 
     EXPECT_EQ(msg.id, 0);
     EXPECT_EQ(msg.call, "moveBy");
-    EXPECT_FALSE(msg.data);
+    EXPECT_FALSE(msg.data.empty());
     );
 }
 
@@ -44,7 +44,7 @@ TEST_F(JSONParserTest, full_json_message)
 
     EXPECT_EQ(msg.id, 0);
     EXPECT_EQ(msg.call, "moveBy");
-    EXPECT_EQ(msg.data.get(), boost::property_tree::ptree());
+    EXPECT_TRUE(msg.data.empty());
     );
 }
 
