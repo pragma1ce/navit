@@ -71,7 +71,7 @@ but also generates directions and even speaks to you using speechd.
 find . -name '*.moc' -delete
 
 %build
-cmake -DSAMPLE_MAP=n -DCMAKE_INSTALL_PREFIX=%{_prefix} -C %{navit_dir}
+cmake -DSAMPLE_MAP=n -DCMAKE_INSTALL_PREFIX=%{_prefix} -C %{navit_dir} -DCMAKE_BUILD_TYPE=Release
 make %{?_smp_mflags}
 
 %install

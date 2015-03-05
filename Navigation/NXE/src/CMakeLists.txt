@@ -20,6 +20,7 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/generated_api.cc
 find_package(DBus REQUIRED)
 find_package(DBusCpp REQUIRED)
 include_directories(${DBUS_INCLUDE_DIR} ${DBUS_ARCH_INCLUDE_DIR} ${DBUSCPP_INCLUDE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set (dbus_library navitdbus.cc)
 set(NXE_SRCS

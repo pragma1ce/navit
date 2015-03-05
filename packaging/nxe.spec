@@ -29,7 +29,7 @@ A simple desc
 %setup -q
 
 %build
-cmake %{nxe_dir} -DDISABLE_TESTS=ON -DCMAKE_INSTALL_PREFIX=%{_prefix} 
+cmake %{nxe_dir} -DDISABLE_TESTS=ON -DCMAKE_INSTALL_PREFIX=%{_prefix} -DCMAKE_BUILD_TYPE=Release
 make %{?_smp_mflags}
 
 %install
@@ -38,3 +38,4 @@ make install DESTDIR=%{buildroot}
 %files 
 %{_prefix}/lib/tizen-extensions-crosswalk/libnxe.so
 %{_prefix}/share/nxe/nxe.conf
+

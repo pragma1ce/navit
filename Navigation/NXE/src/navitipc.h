@@ -13,6 +13,7 @@ public:
     virtual void moveBy(double x, double y) = 0;
     virtual int zoom() = 0;
     virtual void zoomBy(int factor) = 0;
+    virtual void render() = 0;
 };
 
 } // NXE

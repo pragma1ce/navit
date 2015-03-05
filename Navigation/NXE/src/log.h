@@ -3,11 +3,12 @@
 
 #include <spdlog/spdlog.h>
 
-#define nTrace() spdlog::get("nxe_logger")->trace() << __FILENAME__ << "@" << __LINE__ << " "
-#define nDebug() spdlog::get("nxe_logger")->debug() << __FILENAME__ << "@" << __LINE__ << " "
-#define nInfo() spdlog::get("nxe_logger")->info() << __FILENAME__ << "@" << __LINE__ << " "
-#define nError() spdlog::get("nxe_logger")->error()
-#define nFatal() spdlog::get("nxe_logger")->critical()
+#define nTrace() spdlog::get("nxe")->trace() << __FILENAME__ << "@" << __LINE__ << " "
+#define nDebug() spdlog::get("nxe")->debug() << __FILENAME__ << "@" << __LINE__ << " "
+#define nInfo() spdlog::get("nxe")->info() << __FILENAME__ << "@" << __LINE__ << " "
+#define nError() spdlog::get("nxe")->error()
+#define nFatal() spdlog::get("nxe")->critical()
 
+#define perfLog(Measurement) spdlog::get("perf")->info() << Measurement
 #endif // LOG_H
 

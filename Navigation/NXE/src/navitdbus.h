@@ -17,6 +17,7 @@ public:
     virtual void moveBy(double x, double y) override;
     virtual void zoomBy(int y) override;
     virtual int zoom() override;
+    virtual void render() override;
 
 private:
     std::unique_ptr<NavitDBusPrivate> d;

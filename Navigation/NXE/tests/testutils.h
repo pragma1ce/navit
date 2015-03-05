@@ -8,8 +8,11 @@
 
 namespace TestUtils
 {
+
 std::string moveByMessage(int x, int y);
 std::string zoomByMessage(int factor);
+std::string zoomMessage();
+std::string renderMessage();
 void createNXEConfFile();
 
 struct Timer {

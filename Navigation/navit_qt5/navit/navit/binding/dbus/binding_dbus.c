@@ -746,6 +746,7 @@ request_dup(DBusConnection *connection, DBusMessage *message, char *type, void *
 static DBusHandlerResult
 request_get_attr(DBusConnection *connection, DBusMessage *message, char *type, void *data, int (*func)(void *data, enum attr_type type, struct attr *attr, struct attr_iter *iter))
 {
+    dbg(lvl_info, "ASd");
 	DBusMessage *reply;
 	DBusMessageIter iter;
 	struct attr attr;
@@ -1265,6 +1266,7 @@ request_navit_set_layout(DBusConnection *connection, DBusMessage *message)
 static DBusHandlerResult
 request_navit_zoom(DBusConnection *connection, DBusMessage *message)
 {
+    dbg(lvl_info, "CALL!");
 	int factor;
 	struct point p, *pp=NULL;
 	struct navit *navit;
@@ -1287,10 +1289,12 @@ request_navit_zoom(DBusConnection *connection, DBusMessage *message)
 		pp=&p;
 	}
 
-	if (factor > 1)
-		navit_zoom_in(navit, factor, pp);
-	else if (factor < -1)
-		navit_zoom_out(navit, 0-factor, pp);
+//    navit_draw(navit);
+    dbg(lvl_info, "Finished drawinng \n");
+    if (factor > 1)
+        navit_zoom_in(navit, factor, pp);
+    else if (factor < -1)
+        navit_zoom_out(navit, 0-factor, pp);
 
 	return empty_reply(connection, message);
 

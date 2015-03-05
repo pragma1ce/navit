@@ -45,7 +45,7 @@ struct NXEInstancePrivate {
         if (it != timers.end()) {
             auto now = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> diff = now - timers[response.call];
-            nInfo() << "Parsing " << response.call << " took " << diff.count() << " ms";
+            perfLog(response.call) << "Parsing " << response.call << " took " << diff.count() << " ms";
             timers.erase(it);
         }
     }
@@ -86,8 +86,9 @@ void NXEInstance::Initialize()
     bool bAutoRun = d->settings.get<AutoStart>();
     if (bAutoRun) {
         nInfo() << "Autorun is set, starting Navit";
-        auto navi = d->navitProcess.lock();
-        navi->start();
+//        auto navi = d->navitProcess.lock();
+//        navi->start();
+        d->controller.tryStart();
     }
 }
 
@@ -103,10 +104,15 @@ void NXEInstance::HandleMessage(const char* msg)
 
     nDebug() << "Handling message " << message;
 
-    if (!naviProcess->isRunning()) {
-        if (!naviProcess->start()) {
-            d->postMessage(JSONMessage{ 0, "" });
+    using SettingsTags::Navit::AutoStart;
+    bool bAutoRun = d->settings.get<AutoStart>();
+    if (!bAutoRun) {
+        if (!naviProcess->isRunning()) {
+            if (!naviProcess->start()) {
+                d->postMessage(JSONMessage{ 0, "" });
+            }
         }
+        d->controller.tryStart();
     }
 
     // Eat all exceptions!
@@ -114,7 +120,6 @@ void NXEInstance::HandleMessage(const char* msg)
         NXE::JSONMessage jsonMsg = JSONUtils::deserialize(message);
 
         try {
-            d->controller.tryStart();
             d->timers[jsonMsg.call] = std::chrono::high_resolution_clock::now();
             d->controller.handleMessage(jsonMsg);
         }

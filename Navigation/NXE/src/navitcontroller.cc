@@ -27,7 +27,9 @@ struct NavitControllerPrivate {
     map_type m{ boost::fusion::make_pair<MoveByMessage>("moveBy"),
                 boost::fusion::make_pair<ZoomByMessage>("zoomBy"),
                 boost::fusion::make_pair<ZoomMessage>("zoom"),
-                boost::fusion::make_pair<PositionMessage>("position") };
+                boost::fusion::make_pair<PositionMessage>("position"),
+                boost::fusion::make_pair<RenderMessage>("render")
+              };
 
     map_cb_type cb{
         boost::fusion::make_pair<MoveByMessage>([this](const JSONMessage& message) {
@@ -50,6 +52,8 @@ struct NavitControllerPrivate {
             nTrace() << "Calling zoomBy";
             int factor = message.data.get<int>("factor");
             ipc->zoomBy(factor);
+            JSONMessage response {message.id, message.call};
+            successSignal(response);
         }),
 
         boost::fusion::make_pair<ZoomMessage>([this](const JSONMessage& message) {
@@ -64,6 +68,12 @@ struct NavitControllerPrivate {
         boost::fusion::make_pair<PositionMessage>([this](const JSONMessage& message) {
             q->positon();
             // TODO: proper success signal
+        }),
+
+        boost::fusion::make_pair<RenderMessage>([this](const JSONMessage& message) {
+            ipc->render();
+            JSONMessage response {message.id, message.call};
+            successSignal(response);
         }),
     };
 

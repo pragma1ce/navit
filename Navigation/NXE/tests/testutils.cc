@@ -30,6 +30,19 @@ std::string TestUtils::zoomByMessage(int factor)
 {
     boost::property_tree::ptree p;
     p.put("factor", factor);
-    NXE::JSONMessage msg {1, "zoomBy"};
+    NXE::JSONMessage msg {1, "zoomBy", "", p};
+    return NXE::JSONUtils::serialize(msg);
+}
+
+
+std::string TestUtils::zoomMessage()
+{
+    NXE::JSONMessage msg { 3, "zoom"};
+    return NXE::JSONUtils::serialize(msg);
+}
+
+std::string TestUtils::renderMessage()
+{
+    NXE::JSONMessage msg { 3, "render"};
     return NXE::JSONUtils::serialize(msg);
 }

@@ -16,9 +16,11 @@ int main(int argc, char* argv[])
 
     bool debug = std::find(arguments.begin(), arguments.end(), "--debug") != arguments.end();
 
-    auto logger = spdlog::stdout_logger_mt("nxe_logger");
+    auto logger = spdlog::stdout_logger_mt("nxe");
+    auto perfLogger = spdlog::stdout_logger_mt("perf");
+    perfLogger->set_level(spdlog::level::info);
     if (debug)
-        logger->set_level(spdlog::level::debug);
+        logger->set_level(spdlog::level::trace);
     else
         logger->set_level(spdlog::level::err);
     ::testing::InitGoogleTest(&argc, argv);

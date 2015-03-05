@@ -11,11 +11,11 @@ namespace NXE {
 
 struct JSONMessage {
     // necessary fields
-    const std::uint32_t id;
-    const std::string call;
+    std::uint32_t id;
+    std::string call;
     // not necessary fields
-    const std::string error;
-    const boost::property_tree::ptree data;
+    std::string error;
+    boost::property_tree::ptree data;
 };
 
 namespace JSONUtils {
