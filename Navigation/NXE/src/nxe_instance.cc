@@ -86,8 +86,8 @@ void NXEInstance::Initialize()
     bool bAutoRun = d->settings.get<AutoStart>();
     if (bAutoRun) {
         nInfo() << "Autorun is set, starting Navit";
-        auto navi = d->navitProcess.lock();
-        navi->start();
+//        auto navi = d->navitProcess.lock();
+//        navi->start();
         d->controller.tryStart();
     }
 }

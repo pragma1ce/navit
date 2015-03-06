@@ -333,7 +333,7 @@ debug_printf(dbg_level level, const char *module, const int mlen,const char *fun
 {
 	va_list ap;
 	va_start(ap, fmt);
-//    debug_vprintf(level, module, mlen, function, flen, prefix, fmt, ap);
+    debug_vprintf(level, module, mlen, function, flen, prefix, fmt, ap);
 	va_end(ap);
 }
 

@@ -2865,7 +2865,7 @@ static int gui_internal_set_graphics(struct gui_priv *this, struct graphics *gra
 	if (this->fullscreen)
 		this->win->fullscreen(this->win, this->fullscreen != 0);
 	/* Was resize callback already issued? */
-	if (navit_get_ready(this->nav) & 2)
+//	if (navit_get_ready(this->nav) & 2)
 		gui_internal_setup(this);
 	return 0;
 }

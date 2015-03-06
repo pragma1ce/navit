@@ -40,7 +40,8 @@
 static void
 overlay_rect(struct graphics_priv *parent, struct graphics_priv *overlay, int clean, QRect *r)
 {
-	struct point p;
+    qDebug() << Q_FUNC_INFO;
+    struct point p;
 	int w,h;
 	if (clean) {
 		p=overlay->pclean;
@@ -212,7 +213,8 @@ static void gc_destroy(struct graphics_gc_priv *gc)
 //##############################################################################################################
 static void gc_set_linewidth(struct graphics_gc_priv *gc, int w)
 {
-	gc->pen->setWidth(w);
+    qDebug() << Q_FUNC_INFO;
+    gc->pen->setWidth(w);
 }
 
 //##############################################################################################################
@@ -231,7 +233,8 @@ static void gc_set_dashes(struct graphics_gc_priv *gc, int w, int offset, unsign
 //##############################################################################################################
 static void gc_set_foreground(struct graphics_gc_priv *gc, struct color *c)
 {
-	QColor col(c->r >> 8, c->g >> 8, c->b >> 8 /* , c->a >> 8 */); 
+    qDebug() << Q_FUNC_INFO;
+    QColor col(c->r >> 8, c->g >> 8, c->b >> 8 /* , c->a >> 8 */);
 	gc->pen->setColor(col);
 	gc->brush->setColor(col);
 	gc->c=*c;
@@ -266,7 +269,8 @@ static struct graphics_gc_methods gc_methods = {
 //##############################################################################################################
 static struct graphics_gc_priv *gc_new(struct graphics_priv *gr, struct graphics_gc_methods *meth)
 {
-	*meth=gc_methods;
+    qDebug() << Q_FUNC_INFO;
+    *meth=gc_methods;
 	struct graphics_gc_priv *ret=g_new0(struct graphics_gc_priv, 1);
 	ret->pen=new QPen();
 	ret->brush=new QBrush(Qt::SolidPattern);
@@ -280,7 +284,8 @@ static struct graphics_gc_priv *gc_new(struct graphics_priv *gr, struct graphics
 //##############################################################################################################
 static struct graphics_image_priv * image_new(struct graphics_priv *gr, struct graphics_image_methods *meth, char *path, int *w, int *h, struct point *hot, int rotation)
 {
-	struct graphics_image_priv *ret;
+    qDebug() << Q_FUNC_INFO;
+    struct graphics_image_priv *ret;
 	QPixmap *cachedPixmap;
 	QString key(path);
 
@@ -336,7 +341,8 @@ static struct graphics_image_priv * image_new(struct graphics_priv *gr, struct g
 static void draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int count)
 {
 	int i;
-	QPolygon polygon;
+    qDebug() << Q_FUNC_INFO;
+    QPolygon polygon;
 
 	for (i = 0 ; i < count ; i++)
 		polygon.putPoints(i, 1, p[i].x, p[i].y);
@@ -351,7 +357,8 @@ static void draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, st
 //##############################################################################################################
 static void draw_polygon(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int count)
 {
-	int i;
+    qDebug() << Q_FUNC_INFO;
+    int i;
 	QPolygon polygon;
 
 	for (i = 0 ; i < count ; i++)
@@ -368,7 +375,8 @@ static void draw_polygon(struct graphics_priv *gr, struct graphics_gc_priv *gc, 
 //##############################################################################################################
 static void draw_rectangle(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int w, int h)
 {
-	dbg(lvl_debug,"gr=%p gc=%p %d,%d,%d,%d\n", gr, gc, p->x, p->y, w, h);
+    qDebug() << Q_FUNC_INFO;
+    dbg(lvl_debug,"gr=%p gc=%p %d,%d,%d,%d\n", gr, gc, p->x, p->y, w, h);
 	gr->painter->fillRect(p->x,p->y, w, h, *gc->brush);
 }
 
@@ -379,7 +387,8 @@ static void draw_rectangle(struct graphics_priv *gr, struct graphics_gc_priv *gc
 //##############################################################################################################
 static void draw_circle(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int r)
 {
-	gr->painter->setPen(*gc->pen);
+    qDebug() << Q_FUNC_INFO;
+    gr->painter->setPen(*gc->pen);
 	gr->painter->drawArc(p->x-r/2, p->y-r/2, r, r, 0, 360*16);
 	
 }
@@ -391,7 +400,8 @@ static void draw_circle(struct graphics_priv *gr, struct graphics_gc_priv *gc, s
 //##############################################################################################################
 static void draw_text(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct graphics_gc_priv *bg, struct graphics_font_priv *font, char *text, struct point *p, int dx, int dy)
 {
-	QPainter *painter=gr->painter;
+    qDebug() << Q_FUNC_INFO;
+    QPainter *painter=gr->painter;
 #ifndef QT_QPAINTER_USE_FREETYPE
 	QString tmp=QString::fromUtf8(text);
 #ifndef QT_NO_TRANSFORMATIONS
@@ -500,6 +510,7 @@ draw_drag(struct graphics_priv *gr, struct point *p)
 //##############################################################################################################
 static void background_gc(struct graphics_priv *gr, struct graphics_gc_priv *gc)
 {
+    qDebug() << Q_FUNC_INFO;
 	gr->background_gc=gc;
 	gr->rgba[2]=gc->c.r >> 8;
 	gr->rgba[1]=gc->c.g >> 8;
@@ -515,7 +526,9 @@ static void background_gc(struct graphics_priv *gr, struct graphics_gc_priv *gc)
 //##############################################################################################################
 static void draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
 {
-    qDebug() << gr << mode;
+    qDebug() << Q_FUNC_INFO;
+    static int count;
+    qDebug() << gr << mode << count++;
 	dbg(lvl_debug,"mode for %p %d\n", gr, mode);
 	QRect r;
 	if (mode == draw_mode_begin) {
@@ -574,10 +587,10 @@ fullscreen(struct window *win, int on)
 	_outerWidget=this_->widget;
 
 #endif /* QT_QPAINTER_USE_EMBEDDING */
-    if (on)
-        _outerWidget->showFullScreen();
-    else
-        _outerWidget->showMaximized();
+//    if (on)
+//        _outerWidget->showFullScreen();
+//    else
+//        _outerWidget->showMaximized();
 #endif
 	return 1;
 }
@@ -598,7 +611,8 @@ disable_suspend(struct window *win)
 //##############################################################################################################
 static void * get_data(struct graphics_priv *this_, const char *type)
 {
-	struct window *win;
+    qDebug() << Q_FUNC_INFO << type;
+    struct window *win;
 	QString xid;
 	bool ok;
 
@@ -607,7 +621,6 @@ static void * get_data(struct graphics_priv *this_, const char *type)
 		QSize size(this_->w,this_->h);
 		this_->widget->do_resize(size);
 	}
-
 
 	if (!strcmp(type, "qt_widget")) 
 	    return this_->widget;
@@ -622,7 +635,7 @@ static void * get_data(struct graphics_priv *this_, const char *type)
 		if (xid.length()>0) {
 			_outerWidget->embedInto(xid.toULong(&ok,0));
 		}
-        _outerWidget->show();
+//        _outerWidget->show();
 #endif /* QT_QPAINTER_USE_EMBEDDING */
         if (this_->w && this_->h)
             this_->widget->show();
@@ -679,7 +692,8 @@ static void overlay_disable(struct graphics_priv *gr, int disable)
 //##############################################################################################################
 static int set_attr(struct graphics_priv *gr, struct attr *attr)
 {
-	switch (attr->type) {
+    qDebug() << Q_FUNC_INFO;
+    switch (attr->type) {
 	case attr_w:
 		gr->w=attr->u.num;
 		if (gr->w != 0 && gr->h != 0) {
@@ -739,7 +753,8 @@ static struct graphics_methods graphics_methods = {
 static struct graphics_priv * overlay_new(struct graphics_priv *gr, struct graphics_methods *meth, struct point *p, int w, int h,int alpha,int wraparound)
 {
 	*meth=graphics_methods;
-	struct graphics_priv *ret=g_new0(struct graphics_priv, 1);
+    qDebug() << Q_FUNC_INFO;
+    struct graphics_priv *ret=g_new0(struct graphics_priv, 1);
 #ifdef QT_QPAINTER_USE_FREETYPE
 	if (gr->font_freetype_new) {
 		ret->font_freetype_new=gr->font_freetype_new;
@@ -769,12 +784,14 @@ static struct graphics_priv *event_gr;
 static void
 event_qt_main_loop_run(void)
 {
-	event_gr->app->exec();
+    qDebug() << Q_FUNC_INFO;
+    event_gr->app->exec();
 }
 
 static void event_qt_main_loop_quit(void)
 {
-	dbg(lvl_debug,"enter\n");
+    qDebug() << Q_FUNC_INFO;
+    dbg(lvl_debug,"enter\n");
 	exit(0);
 }
 
@@ -869,7 +886,8 @@ event_qt_new(struct event_methods *meth)
 //##############################################################################################################
 static struct graphics_priv * graphics_qt_qpainter_new(struct navit *nav, struct graphics_methods *meth, struct attr **attrs, struct callback_list *cbl)
 {
-	struct graphics_priv *ret;
+    qDebug() << Q_FUNC_INFO;
+    struct graphics_priv *ret;
 	struct font_priv * (*font_freetype_new)(void *meth);
 	struct attr *attr;
 

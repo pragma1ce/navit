@@ -16,8 +16,8 @@
  * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA  02110-1301, USA.
  */
-#ifndef __GRAPHICS_QT_QPAINTER_H
-#define __GRAPHICS_QT_QPAINTER_H
+#ifndef __GRAPHICS_QT_OFFSCREEN_H
+#define __GRAPHICS_QT_OFFSCREEN_H
 
 #include <glib.h>
 #include <stdio.h>
@@ -36,9 +36,6 @@
 #include "navit/navit.h"
 
 #include <qglobal.h>
-#if QT_VERSION < 0x040000
-#error "Support for Qt 3 was dropped in rev 5999."
-#endif
 
 #ifndef QT_QPAINTER_USE_FREETYPE
 #define QT_QPAINTER_USE_FREETYPE 1
@@ -50,10 +47,8 @@
 
 #include <QResizeEvent>
 #include <QApplication>
-#if QT_VERSION >= 0x040200
 #include <QGraphicsScene>
 #include <QGraphicsView>
-#endif
 #include <QPainter>
 #include <QPen>
 #include <QBrush>
@@ -63,80 +58,49 @@
 #include <QPixmapCache>
 #include <QtGui>
 #include <QGLWidget>
-#ifdef HAVE_QT_SVG
-#include <QSvgRenderer>
-#endif
 
 /* Use qt events instead of glib */
 #ifndef QT_QPAINTER_USE_EVENT_QT
 #define QT_QPAINTER_USE_EVENT_QT 1
 #endif
-
-#ifdef Q_WS_X11
-#ifndef QT_QPAINTER_USE_EMBEDDING
-#define QT_QPAINTER_USE_EMBEDDING 1
-#endif
-#endif
-
-#ifdef QT_QPAINTER_USE_EMBEDDING
-#include <QX11EmbedWidget>
-#endif
-
-#ifndef QT_QPAINTER_RENDERAREA_PARENT
-#define QT_QPAINTER_RENDERAREA_PARENT QWidget
-//#define QT_QPAINTER_RENDERAREA_PARENT QGLWidget
-#endif
-
-class RenderArea;
-
-//##############################################################################################################
-//# Description: 
-//# Comment: 
-//# Authors: Martin Schaller (04/2008)
-//##############################################################################################################
 struct graphics_gc_priv {
-	QPen *pen;
-	QBrush *brush;
-	struct color c;
+    QPen* pen;
+    QBrush* brush;
+    struct color c;
 };
 
 //##############################################################################################################
-//# Description: 
-//# Comment: 
+//# Description:
+//# Comment:
 //# Authors: Martin Schaller (04/2008)
 //##############################################################################################################
 struct graphics_priv {
-#ifdef HAVE_QPE
-	QPEApplication *app;
-#else
-	QApplication *app;
-#endif
-	RenderArea *widget;
-	QPainter *painter;
-	struct graphics_gc_priv *background_gc;
-	unsigned char rgba[4];
-	enum draw_mode_num mode;
-	struct graphics_priv *parent,*overlays,*next;
-	struct point p,pclean;
-	int cleanup;
-	int overlay_disable;
-	int wraparound;
+    QApplication* app;
+    QPainter* painter;
+    struct graphics_gc_priv* background_gc;
+    unsigned char rgba[4];
+    enum draw_mode_num mode;
+    struct graphics_priv* parent, *overlays, *next;
+    struct point p, pclean;
+    int cleanup;
+    int overlay_disable;
+    int wraparound;
 #ifdef QT_QPAINTER_USE_FREETYPE
-	struct font_priv * (*font_freetype_new)(void *meth);
-	struct font_freetype_methods freetype_methods;
+    struct font_priv* (*font_freetype_new)(void* meth);
+    struct font_freetype_methods freetype_methods;
 #endif
-	int w,h,flags;
-	struct navit* nav;
-	char *window_title;
+    int w, h, flags;
+    struct navit* nav;
+    char* window_title;
 };
 
-void qt_qpainter_draw(struct graphics_priv *gr, const QRect *r, int paintev);
+void qt_offscreen_draw(struct graphics_priv* gr, const QRect* r, int paintev);
 struct event_watch {
-	        QSocketNotifier *sn;
-		        struct callback *cb;
-			        int fd;
+    QSocketNotifier* sn;
+    struct callback* cb;
+    int fd;
 };
 
-void event_qt_remove_timeout(struct event_timeout *ev);
+void event_qt_remove_timeout(struct event_timeout* ev);
 
-#endif /* __GRAPHICS_QT_QPAINTER_H */
+#endif /* __GRAPHICS_QT_OFFSCREEN_H */

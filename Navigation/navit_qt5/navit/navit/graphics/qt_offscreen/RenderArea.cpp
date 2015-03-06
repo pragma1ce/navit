@@ -109,7 +109,6 @@ QSize RenderArea::sizeHint() const
 //##############################################################################################################
 void RenderArea::paintEvent(QPaintEvent * event)
 {
-    qDebug() << Q_FUNC_INFO;
     qt_qpainter_draw(gra, &event->rect(), 1);
 }
 
