@@ -67,8 +67,6 @@
 #include <QSvgRenderer>
 #endif
 
-#define QT_QPAINTER_NO_WIDGET
-
 /* Use qt events instead of glib */
 #ifndef QT_QPAINTER_USE_EVENT_QT
 #define QT_QPAINTER_USE_EVENT_QT 1
@@ -85,8 +83,8 @@
 #endif
 
 #ifndef QT_QPAINTER_RENDERAREA_PARENT
-#define QT_QPAINTER_RENDERAREA_PARENT QWidget
-//#define QT_QPAINTER_RENDERAREA_PARENT QGLWidget
+//#define QT_QPAINTER_RENDERAREA_PARENT QWidget
+#define QT_QPAINTER_RENDERAREA_PARENT QGLWidget
 #endif
 
 class RenderArea;

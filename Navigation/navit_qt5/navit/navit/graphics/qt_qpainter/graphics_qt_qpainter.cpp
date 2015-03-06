@@ -65,7 +65,8 @@ overlay_rect(struct graphics_priv *parent, struct graphics_priv *overlay, int cl
 void
 qt_qpainter_draw(struct graphics_priv *gr, const QRect *r, int paintev)
 {
-    qDebug() << Q_FUNC_INFO;
+    static int count = 0;
+    qDebug() << Q_FUNC_INFO << count++;
 	if (!paintev) {
 #ifndef QT_QPAINTER_NO_WIDGET
 		dbg(lvl_debug,"update %d,%d %d x %d\n", r->x(), r->y(), r->width(), r->height());
@@ -78,7 +79,7 @@ qt_qpainter_draw(struct graphics_priv *gr, const QRect *r, int paintev)
 		if (r->y() > gr->widget->pixmap->height())
 			return;
 		dbg(lvl_debug,"update valid %d,%d %dx%d\n", r->x(), r->y(), r->width(), r->height());
-		gr->widget->update(*r);
+        gr->widget->update(*r);
 #endif
 		return;
 	}
@@ -91,24 +92,24 @@ qt_qpainter_draw(struct graphics_priv *gr, const QRect *r, int paintev)
 		painter.setPen(*gr->background_gc->pen);
 		painter.fillRect(0, 0, gr->widget->pixmap->width(), gr->widget->pixmap->height(), *gr->background_gc->brush);
 	}
-	painter.drawPixmap(QPoint(gr->p.x,gr->p.y), *gr->widget->pixmap, *r);
-	while (overlay) {
-		QRect ovr;
-		overlay_rect(gr, overlay, 0, &ovr);
-		if (!overlay->overlay_disable && r->intersects(ovr)) {
-			unsigned char *data;
-			int i,size=ovr.width()*ovr.height();
-			QImage img=overlay->widget->pixmap->toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
-			data=img.bits();
-			for (i = 0 ; i < size ; i++) {
-				if (data[0] == overlay->rgba[0] && data[1] == overlay->rgba[1] && data[2] == overlay->rgba[2]) 
-					data[3]=overlay->rgba[3];
-				data+=4;
-			}
-			painter.drawImage(QPoint(ovr.x()-r->x(),ovr.y()-r->y()), img);
-		}
-		overlay=overlay->next;
-	}
+    painter.drawPixmap(QPoint(gr->p.x,gr->p.y), *gr->widget->pixmap, *r);
+    while (overlay) {
+        QRect ovr;
+        overlay_rect(gr, overlay, 0, &ovr);
+        if (!overlay->overlay_disable && r->intersects(ovr)) {
+            unsigned char *data;
+            int i,size=ovr.width()*ovr.height();
+            QImage img=overlay->widget->pixmap->toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
+            data=img.bits();
+            for (i = 0 ; i < size ; i++) {
+                if (data[0] == overlay->rgba[0] && data[1] == overlay->rgba[1] && data[2] == overlay->rgba[2])
+                    data[3]=overlay->rgba[3];
+                data+=4;
+            }
+            painter.drawImage(QPoint(ovr.x()-r->x(),ovr.y()-r->y()), img);
+        }
+        overlay=overlay->next;
+    }
 //    QByteArray bytes;
 //    QBuffer buffer (&bytes);
 //    buffer.open(QIODevice::WriteOnly);
@@ -414,46 +415,46 @@ static void draw_text(struct graphics_priv *gr, struct graphics_gc_priv *fg, str
 
 	int i,x,y;
 	
-	if (! font)
-		return;
-	t=gr->freetype_methods.text_new(text, (struct font_freetype_font *)font, dx, dy);
-	x=p->x << 6;
-	y=p->y << 6;
-	gp=t->glyph;
-	i=t->glyph_count;
-	if (bg) {
-		while (i-- > 0) {
-			g=*gp++;
-			if (g->w && g->h) {
-				unsigned char *data;
-				QImage img(g->w+2, g->h+2, QImage::Format_ARGB32_Premultiplied);
-				data=img.bits();
-				gr->freetype_methods.get_shadow(g,(unsigned char *)data,32,img.bytesPerLine(),bgc,&transparent);
+    if (! font)
+        return;
+    t=gr->freetype_methods.text_new(text, (struct font_freetype_font *)font, dx, dy);
+    x=p->x << 6;
+    y=p->y << 6;
+    gp=t->glyph;
+    i=t->glyph_count;
+    if (bg) {
+        while (i-- > 0) {
+            g=*gp++;
+            if (g->w && g->h) {
+                unsigned char *data;
+                QImage img(g->w+2, g->h+2, QImage::Format_ARGB32_Premultiplied);
+                data=img.bits();
+                gr->freetype_methods.get_shadow(g,(unsigned char *)data,32,img.bytesPerLine(),bgc,&transparent);
 
-				painter->drawImage(((x+g->x)>>6)-1, ((y+g->y)>>6)-1, img);
-			}
-			x+=g->dx;
-			y+=g->dy;
-		}
-	} else
-		bgc=&transparent;
-	x=p->x << 6;
-	y=p->y << 6;
-	gp=t->glyph;
-	i=t->glyph_count;
-	while (i-- > 0) {
-		g=*gp++;
-		if (g->w && g->h) {
-			unsigned char *data;
-			QImage img(g->w, g->h, QImage::Format_ARGB32_Premultiplied);
-			data=img.bits();
-			gr->freetype_methods.get_glyph(g,(unsigned char *)data,32,img.bytesPerLine(),fgc,bgc,&transparent);
-			painter->drawImage((x+g->x)>>6, (y+g->y)>>6, img);
-		}
+                painter->drawImage(((x+g->x)>>6)-1, ((y+g->y)>>6)-1, img);
+            }
+            x+=g->dx;
+            y+=g->dy;
+        }
+    } else
+        bgc=&transparent;
+    x=p->x << 6;
+    y=p->y << 6;
+    gp=t->glyph;
+    i=t->glyph_count;
+    while (i-- > 0) {
+        g=*gp++;
+        if (g->w && g->h) {
+            unsigned char *data;
+            QImage img(g->w, g->h, QImage::Format_ARGB32_Premultiplied);
+            data=img.bits();
+            gr->freetype_methods.get_glyph(g,(unsigned char *)data,32,img.bytesPerLine(),fgc,bgc,&transparent);
+            painter->drawImage((x+g->x)>>6, (y+g->y)>>6, img);
+        }
                 x+=g->dx;
                 y+=g->dy;
-	}
-	gr->freetype_methods.text_destroy(t);
+    }
+    gr->freetype_methods.text_destroy(t);
 #endif
 }
 
@@ -464,7 +465,7 @@ static void draw_text(struct graphics_priv *gr, struct graphics_gc_priv *fg, str
 //##############################################################################################################
 static void draw_image(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct point *p, struct graphics_image_priv *img)
 {
-	gr->painter->drawPixmap(p->x, p->y, *img->pixmap);
+    gr->painter->drawPixmap(p->x, p->y, *img->pixmap);
 }
 
 //##############################################################################################################
@@ -541,7 +542,8 @@ static void draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
 /* Remove QEventLoop::DeferredDeletion as this is not supported in qt5 */
 #if QT_VERSION >= 0x050000
 					if (!gr->parent)
-						QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers|QEventLoop::X11ExcludeTimers);
+                        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers|QEventLoop::X11ExcludeTimers);
+//                        QCoreApplication::processEvents();
 #elif QT_VERSION >= 0x040000
 			 		if (!gr->parent)
 			 			QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents|QEventLoop::ExcludeSocketNotifiers|QEventLoop::DeferredDeletion|QEventLoop::X11ExcludeTimers);
@@ -955,8 +957,5 @@ void plugin_init(void)
         plugin_register_event_type("qt", event_qt_new);
 #endif
 }
-
-
-
 
 // *** EOF *** 

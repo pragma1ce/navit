@@ -106,3 +106,20 @@ TEST_F(NXEInstanceTest, renderBenchmarkTest)
     );
     EXPECT_TRUE(respMsg.data.empty());
 }
+
+TEST_F(NXEInstanceTest, zoomedRenderBenchmarkTest)
+{
+    std::string msg{ TestUtils::renderMessage() };
+    std::string zoomMsg{ TestUtils::zoomByMessage(8) };
+    instance.registerMessageCallback(std::bind(&NXEInstanceTest::callback, this, std::placeholders::_1));
+    EXPECT_NO_THROW(instance.Initialize());
+    std::chrono::milliseconds dura( 100 );
+    std::this_thread::sleep_for(dura);
+    instance.HandleMessage(zoomMsg.data());
+    EXPECT_NO_THROW(
+        for(int i = 0 ; i < 20; ++i) {
+            instance.HandleMessage(msg.data());
+        }
+    );
+    EXPECT_TRUE(respMsg.data.empty());
+}
