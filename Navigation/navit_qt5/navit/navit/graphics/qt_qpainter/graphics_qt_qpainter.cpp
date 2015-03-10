@@ -68,7 +68,7 @@ qt_qpainter_draw(struct graphics_priv *gr, const QRect *r, int paintev)
 {
     static int count = 0;
     qDebug() << Q_FUNC_INFO << count++;
-	if (!paintev) {
+    if (!paintev) {
 #ifndef QT_QPAINTER_NO_WIDGET
 		dbg(lvl_debug,"update %d,%d %d x %d\n", r->x(), r->y(), r->width(), r->height());
 		if (r->x() <= -r->width())
@@ -511,7 +511,7 @@ draw_drag(struct graphics_priv *gr, struct point *p)
 static void background_gc(struct graphics_priv *gr, struct graphics_gc_priv *gc)
 {
     qDebug() << Q_FUNC_INFO;
-	gr->background_gc=gc;
+    gr->background_gc=gc;
 	gr->rgba[2]=gc->c.r >> 8;
 	gr->rgba[1]=gc->c.g >> 8;
 	gr->rgba[0]=gc->c.b >> 8;
@@ -529,7 +529,7 @@ static void draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
     qDebug() << Q_FUNC_INFO;
     static int count;
     qDebug() << gr << mode << count++;
-	dbg(lvl_debug,"mode for %p %d\n", gr, mode);
+    dbg(lvl_debug,"mode for %p %d\n", gr, mode);
 	QRect r;
 	if (mode == draw_mode_begin) {
 		if (gr->widget->pixmap->paintingActive()) {

@@ -19,9 +19,6 @@
 #ifndef __GRAPHICS_QT_OFFSCREEN_H
 #define __GRAPHICS_QT_OFFSCREEN_H
 
-#include <glib.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "config.h"
 #include "navit/point.h"
 #include "navit/item.h"
@@ -37,18 +34,10 @@
 
 #include <qglobal.h>
 
-#ifndef QT_QPAINTER_USE_FREETYPE
-#define QT_QPAINTER_USE_FREETYPE 1
-#endif
-
-#ifdef QT_QPAINTER_USE_FREETYPE
 #include "navit/font/freetype/font_freetype.h"
-#endif
 
 #include <QResizeEvent>
 #include <QApplication>
-#include <QGraphicsScene>
-#include <QGraphicsView>
 #include <QPainter>
 #include <QPen>
 #include <QBrush>
@@ -57,12 +46,7 @@
 #include <QPolygonF>
 #include <QPixmapCache>
 #include <QtGui>
-#include <QGLWidget>
 
-/* Use qt events instead of glib */
-#ifndef QT_QPAINTER_USE_EVENT_QT
-#define QT_QPAINTER_USE_EVENT_QT 1
-#endif
 struct graphics_gc_priv {
     QPen* pen;
     QBrush* brush;
@@ -75,32 +59,32 @@ struct graphics_gc_priv {
 //# Authors: Martin Schaller (04/2008)
 //##############################################################################################################
 struct graphics_priv {
-    QApplication* app;
-    QPainter* painter;
-    struct graphics_gc_priv* background_gc;
+    QApplication* app = nullptr;
+    QPainter* painter = nullptr;
+    QPixmap* buffer = nullptr;
+    callback_list *cbl;
+    graphics_gc_priv* background_gc;
     unsigned char rgba[4];
     enum draw_mode_num mode;
-    struct graphics_priv* parent, *overlays, *next;
-    struct point p, pclean;
+    graphics_priv* parent, *overlays, *next;
+    point p, pclean;
     int cleanup;
     int overlay_disable;
     int wraparound;
-#ifdef QT_QPAINTER_USE_FREETYPE
-    struct font_priv* (*font_freetype_new)(void* meth);
-    struct font_freetype_methods freetype_methods;
-#endif
+    font_priv* (*font_freetype_new)(void* meth);
+    font_freetype_methods freetype_methods;
     int w, h, flags;
-    struct navit* nav;
-    char* window_title;
+    navit* nav;
+    std::string window_title;
 };
 
-void qt_offscreen_draw(struct graphics_priv* gr, const QRect* r, int paintev);
+void qt_offscreen_draw(graphics_priv* gr, const QRect* r, int paintev);
 struct event_watch {
     QSocketNotifier* sn;
-    struct callback* cb;
+    callback* cb;
     int fd;
 };
 
-void event_qt_remove_timeout(struct event_timeout* ev);
+void event_qt_remove_timeout(event_timeout* ev);
 
 #endif /* __GRAPHICS_QT_OFFSCREEN_H */
