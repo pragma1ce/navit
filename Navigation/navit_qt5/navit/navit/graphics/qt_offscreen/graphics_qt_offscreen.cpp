@@ -16,9 +16,14 @@
 #include <QtGui/QFont>
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEngine>
+#include <QtGui/QOpenGLContext>
+#include <QtGui/QOpenGLPaintDevice>
 
+#include <QtGui/QWindow>
 
 #include <QtWidgets/QApplication>
+#include <QtOpenGL/QGLFramebufferObject>
+#include <QtOpenGL/QGLFramebufferObjectFormat>
 
 void qt_offscreen_draw(graphics_priv* gr, const QRect* r, int paintev);
 void event_qt_remove_timeout(event_timeout* ev);
@@ -31,6 +36,7 @@ const std::uint16_t defaultHeight = 1080;
 struct Counter {
     int polygons = 0;
     int lines = 0;
+    int text = 0;
     QElapsedTimer draw;
 };
 
@@ -46,7 +52,7 @@ QDebug operator<<(QDebug dbg, const std::unique_ptr<T>& ptr)
 
 QDebug operator<<(QDebug dbg, const Counter& ctrs)
 {
-    dbg.nospace() << "Polygons =" << ctrs.polygons << "lines=" << ctrs.lines;
+    dbg.nospace() << "Polygons =" << ctrs.polygons << "lines=" << ctrs.lines << "text=" << ctrs.text;
     return dbg.space();
 }
 
@@ -123,9 +129,10 @@ qt_offscreen_draw(struct graphics_priv* gr, const QRect* r, int paintev)
     //        }
     //        overlay = overlay->next;
     //    }
-//    const QString frame = QString("/tmp/frame%1.png").arg(count);
-//    qDebug() << "Saving frame " << frame;
+    const QString frame = QString("/tmp/frame%1.png").arg(count);
+    qDebug() << "Saving frame " << frame;
     qDebug() << ctrs;
+    qDebug() << gr->fbo->toImage().save(frame);
 //    gr->buffer->save(frame);
 }
 
@@ -275,52 +282,53 @@ static void draw_circle(struct graphics_priv* gr, struct graphics_gc_priv* gc, s
 
 static void draw_text(struct graphics_priv* gr, struct graphics_gc_priv* fg, struct graphics_gc_priv* bg, struct graphics_font_priv* font, char* text, struct point* p, int dx, int dy)
 {
-    struct font_freetype_text* t;
-    struct font_freetype_glyph* g, **gp;
-    struct color transparent = { 0x0000, 0x0000, 0x0000, 0x0000 };
-    struct color* fgc = &fg->c, *bgc = &bg->c;
+    ctrs.text++;
+//    struct font_freetype_text* t;
+//    struct font_freetype_glyph* g, **gp;
+//    struct color transparent = { 0x0000, 0x0000, 0x0000, 0x0000 };
+//    struct color* fgc = &fg->c, *bgc = &bg->c;
 
-    int i, x, y;
+//    int i, x, y;
 
-    if (!font)
-        return;
-    t = gr->freetype_methods.text_new(text, (struct font_freetype_font*)font, dx, dy);
-    x = p->x << 6;
-    y = p->y << 6;
-    gp = t->glyph;
-    i = t->glyph_count;
-    if (bg) {
-        while (i-- > 0) {
-            g = *gp++;
-            if (g->w && g->h) {
-                unsigned char* data;
-                QImage img(g->w + 2, g->h + 2, QImage::Format_ARGB32_Premultiplied);
-                data = img.bits();
-                gr->freetype_methods.get_shadow(g, (unsigned char*)data, 32, img.bytesPerLine(), bgc, &transparent);
-                gr->painter->drawImage(((x + g->x) >> 6) - 1, ((y + g->y) >> 6) - 1, img);
-            }
-            x += g->dx;
-            y += g->dy;
-        }
-    } else
-        bgc = &transparent;
-    x = p->x << 6;
-    y = p->y << 6;
-    gp = t->glyph;
-    i = t->glyph_count;
-    while (i-- > 0) {
-        g = *gp++;
-        if (g->w && g->h) {
-            unsigned char* data;
-            QImage img(g->w, g->h, QImage::Format_ARGB32_Premultiplied);
-            data = img.bits();
-            gr->freetype_methods.get_glyph(g, (unsigned char*)data, 32, img.bytesPerLine(), fgc, bgc, &transparent);
-            gr->painter->drawImage((x + g->x) >> 6, (y + g->y) >> 6, img);
-        }
-        x += g->dx;
-        y += g->dy;
-    }
-    gr->freetype_methods.text_destroy(t);
+//    if (!font)
+//        return;
+//    t = gr->freetype_methods.text_new(text, (struct font_freetype_font*)font, dx, dy);
+//    x = p->x << 6;
+//    y = p->y << 6;
+//    gp = t->glyph;
+//    i = t->glyph_count;
+//    if (bg) {
+//        while (i-- > 0) {
+//            g = *gp++;
+//            if (g->w && g->h) {
+//                unsigned char* data;
+//                QImage img(g->w + 2, g->h + 2, QImage::Format_ARGB32_Premultiplied);
+//                data = img.bits();
+//                gr->freetype_methods.get_shadow(g, (unsigned char*)data, 32, img.bytesPerLine(), bgc, &transparent);
+//                gr->painter->drawImage(((x + g->x) >> 6) - 1, ((y + g->y) >> 6) - 1, img);
+//            }
+//            x += g->dx;
+//            y += g->dy;
+//        }
+//    } else
+//        bgc = &transparent;
+//    x = p->x << 6;
+//    y = p->y << 6;
+//    gp = t->glyph;
+//    i = t->glyph_count;
+//    while (i-- > 0) {
+//        g = *gp++;
+//        if (g->w && g->h) {
+//            unsigned char* data;
+//            QImage img(g->w, g->h, QImage::Format_ARGB32_Premultiplied);
+//            data = img.bits();
+//            gr->freetype_methods.get_glyph(g, (unsigned char*)data, 32, img.bytesPerLine(), fgc, bgc, &transparent);
+//            gr->painter->drawImage((x + g->x) >> 6, (y + g->y) >> 6, img);
+//        }
+//        x += g->dx;
+//        y += g->dy;
+//    }
+//    gr->freetype_methods.text_destroy(t);
 }
 
 static void draw_image(struct graphics_priv* gr, struct graphics_gc_priv* fg, struct point* p, struct graphics_image_priv* img)
@@ -633,8 +641,33 @@ static struct graphics_priv* graphics_qt_offscreen_new(struct navit* nav, struct
     meth->get_text_bbox = (void (*)(struct graphics_priv*, struct graphics_font_priv*, char*, int, int, struct point*, int))ret->freetype_methods.get_text_bbox;
 
     ret->app.reset(new QApplication(argc, argv));
-    ret->buffer.reset(new QPixmap(defaultWidth, defaultHeight));
-    ret->buffer->fill();
+    QSurfaceFormat fmt;
+    fmt.setMajorVersion(3);
+    fmt.setMinorVersion(3);
+
+    ret->window.reset(new QWindow);
+    ret->window->setSurfaceType(QWindow::OpenGLSurface);
+    ret->window->setFormat(fmt);
+    ret->window->create();
+
+    ret->context.reset(new QOpenGLContext);
+    ret->context->setFormat(fmt);
+    if(!ret->context->create())
+        qFatal("NO!!");
+    ret->context->makeCurrent(ret->window.get());
+
+    const QRect drawRect(0, 0, 400, 400);
+//    const QRect drawRect(0, 0, defaultWidth, defaultHeight);
+    const QSize drawRectSize = drawRect.size();
+
+    QGLFramebufferObjectFormat fboFormat;
+    fboFormat.setSamples(16);
+    fboFormat.setAttachment(QGLFramebufferObject::CombinedDepthStencil);
+
+    ret->fbo.reset(new QGLFramebufferObject(drawRectSize, fboFormat));
+    ret->fbo->bind();
+
+    ret->buffer.reset(new QOpenGLPaintDevice(drawRectSize));
     ret->painter.reset(new QPainter(ret->buffer.get()));
     qDebug() << "Crated pixmap" << ret->buffer << "and painter" << ret->painter;
     ret->painter->fillRect(0, 0, ret->buffer->width(), ret->buffer->height(), QBrush());

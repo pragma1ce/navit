@@ -17,8 +17,11 @@ class QPen;
 class QBrush;
 class QApplication;
 class QPainter;
-class QPixmap;
+class QOpenGLPaintDevice;
 class QRect;
+class QWindow;
+class QOpenGLContext;
+class QGLFramebufferObject;
 struct callback_list;
 struct event_timeout;
 struct callback_list;
@@ -34,7 +37,10 @@ struct graphics_gc_priv {
 struct graphics_priv {
     std::unique_ptr<QApplication> app;
     std::unique_ptr<QPainter> painter;
-    std::unique_ptr<QPixmap> buffer = nullptr;
+    std::unique_ptr<QOpenGLPaintDevice> buffer = nullptr;
+    std::unique_ptr<QWindow> window = nullptr;
+    std::unique_ptr<QOpenGLContext> context = nullptr;
+    std::unique_ptr<QGLFramebufferObject> fbo = nullptr;
     callback_list *cbl;
     graphics_gc_priv* background_gc;
     unsigned char rgba[4];
