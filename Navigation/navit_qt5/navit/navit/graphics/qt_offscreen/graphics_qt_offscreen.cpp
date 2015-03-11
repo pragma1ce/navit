@@ -24,8 +24,8 @@ void qt_offscreen_draw(graphics_priv* gr, const QRect* r, int paintev);
 void event_qt_remove_timeout(event_timeout* ev);
 
 namespace {
-const std::uint16_t width = 800;
-const std::uint16_t height = 600;
+const std::uint16_t defaultWidth = 1900;
+const std::uint16_t defaultHeight = 1080;
 
 // For testing purposes only
 struct Counter {
@@ -408,7 +408,7 @@ static void* get_data(struct graphics_priv* this_, const char* type)
     if (!strcmp(type, "window")) {
         win = new window;
         //        this_->buffer->paintEngine()->painter()->end();
-        callback_list_call_attr_2(this_->cbl, attr_resize, width, height);
+        callback_list_call_attr_2(this_->cbl, attr_resize, defaultWidth, defaultHeight);
         win->priv = this_;
         win->fullscreen = fullscreen;
         win->disable_suspend = disable_suspend;
@@ -633,14 +633,14 @@ static struct graphics_priv* graphics_qt_offscreen_new(struct navit* nav, struct
     meth->get_text_bbox = (void (*)(struct graphics_priv*, struct graphics_font_priv*, char*, int, int, struct point*, int))ret->freetype_methods.get_text_bbox;
 
     ret->app.reset(new QApplication(argc, argv));
-    ret->buffer.reset(new QPixmap(width, height));
+    ret->buffer.reset(new QPixmap(defaultWidth, defaultHeight));
     ret->buffer->fill();
     ret->painter.reset(new QPainter(ret->buffer.get()));
     qDebug() << "Crated pixmap" << ret->buffer << "and painter" << ret->painter;
-    ret->painter->fillRect(0, 0, width, height, QBrush());
+    ret->painter->fillRect(0, 0, ret->buffer->width(), ret->buffer->height(), QBrush());
     event_gr = ret;
-    ret->w = width;
-    ret->h = height;
+    ret->w = ret->buffer->width();
+    ret->h = ret->buffer->height();
     if ((attr = attr_search(attrs, nullptr, attr_w)))
         ret->w = attr->u.num;
     if ((attr = attr_search(attrs, nullptr, attr_h)))
