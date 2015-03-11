@@ -101,7 +101,6 @@ qt_offscreen_draw(struct graphics_priv* gr, const QRect* r, int paintev)
         //        qt_offscreen_draw(gr, r, 1);
         return;
     }
-    qDebug() << "ASD";
     //    QPixmap pixmap(r->width(), r->height());
     //    QPainter painter(&pixmap);
     struct graphics_priv* overlay = nullptr;
@@ -282,7 +281,7 @@ static void draw_circle(struct graphics_priv* gr, struct graphics_gc_priv* gc, s
 
 static void draw_text(struct graphics_priv* gr, struct graphics_gc_priv* fg, struct graphics_gc_priv* bg, struct graphics_font_priv* font, char* text, struct point* p, int dx, int dy)
 {
-    ctrs.text++;
+//    ctrs.text++;
 //    struct font_freetype_text* t;
 //    struct font_freetype_glyph* g, **gp;
 //    struct color transparent = { 0x0000, 0x0000, 0x0000, 0x0000 };
@@ -456,25 +455,6 @@ static void overlay_disable(struct graphics_priv* gr, int disable)
 
 static int set_attr(struct graphics_priv* gr, struct attr* attr)
 {
-    qDebug() << Q_FUNC_INFO;
-    switch (attr->type) {
-    case attr_w:
-        gr->w = attr->u.num;
-        if (gr->w != 0 && gr->h != 0) {
-            QSize size(gr->w, gr->h);
-            //            gr->widget->do_resize(size);
-        }
-        break;
-    case attr_h:
-        gr->h = attr->u.num;
-        if (gr->w != 0 && gr->h != 0) {
-            QSize size(gr->w, gr->h);
-            //            gr->widget->do_resize(size);
-        }
-        break;
-    default:
-        return 0;
-    }
     return 1;
 }
 
@@ -500,7 +480,7 @@ static struct graphics_methods graphics_methods = {
     get_text_bbox,
     overlay_disable,
     nullptr,
-    set_attr,
+    nullptr,
 };
 
 static struct graphics_priv* overlay_new(struct graphics_priv* gr, struct graphics_methods* meth, struct point* p, int w, int h, int alpha, int wraparound)
@@ -642,8 +622,8 @@ static struct graphics_priv* graphics_qt_offscreen_new(struct navit* nav, struct
 
     ret->app.reset(new QApplication(argc, argv));
     QSurfaceFormat fmt;
-    fmt.setMajorVersion(3);
-    fmt.setMinorVersion(3);
+//    fmt.setMajorVersion(3);
+//    fmt.setMinorVersion(3);
 
     ret->window.reset(new QWindow);
     ret->window->setSurfaceType(QWindow::OpenGLSurface);
@@ -656,8 +636,8 @@ static struct graphics_priv* graphics_qt_offscreen_new(struct navit* nav, struct
         qFatal("NO!!");
     ret->context->makeCurrent(ret->window.get());
 
-    const QRect drawRect(0, 0, 400, 400);
-//    const QRect drawRect(0, 0, defaultWidth, defaultHeight);
+//    const QRect drawRect(0, 0, 400, 400);
+    const QRect drawRect(0, 0, defaultWidth, defaultHeight);
     const QSize drawRectSize = drawRect.size();
 
     QGLFramebufferObjectFormat fboFormat;
