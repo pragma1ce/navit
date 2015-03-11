@@ -92,6 +92,19 @@ TEST_F(NXEInstanceTest, zoomInAndOut)
     EXPECT_FALSE(respMsg.data.empty());
 }
 
+TEST_F(NXEInstanceTest, renderTest)
+{
+    std::string msg{ TestUtils::renderMessage() };
+    instance.registerMessageCallback(std::bind(&NXEInstanceTest::callback, this, std::placeholders::_1));
+    EXPECT_NO_THROW(instance.Initialize());
+    std::chrono::milliseconds dura( 100 );
+    std::this_thread::sleep_for(dura);
+    EXPECT_NO_THROW(
+        instance.HandleMessage(msg.data());
+    );
+    EXPECT_TRUE(respMsg.data.empty());
+}
+
 TEST_F(NXEInstanceTest, renderBenchmarkTest)
 {
     std::string msg{ TestUtils::renderMessage() };

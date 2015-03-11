@@ -1,5 +1,54 @@
 #include <glib.h>
 #include "graphics_qt_offscreen.h"
+#include "navit/window.h"
+#include "navit/event.h"
+#include "navit/callback.h"
+#include "config.h"
+#include "plugin.h"
+
+#include <QtCore/QtDebug>
+#include <QtCore/QEventLoop>
+#include <QtCore/QElapsedTimer>
+
+#include <QtGui/QPen>
+#include <QtGui/QBrush>
+#include <QtGui/QPixmapCache>
+#include <QtGui/QFont>
+#include <QtGui/QPainter>
+#include <QtGui/QPaintEngine>
+
+
+#include <QtWidgets/QApplication>
+
+void qt_offscreen_draw(graphics_priv* gr, const QRect* r, int paintev);
+void event_qt_remove_timeout(event_timeout* ev);
+
+namespace {
+const std::uint16_t width = 800;
+const std::uint16_t height = 600;
+
+// For testing purposes only
+struct Counter {
+    int polygons = 0;
+    int lines = 0;
+    QElapsedTimer draw;
+};
+
+static Counter ctrs;
+}
+
+template <typename T>
+QDebug operator<<(QDebug dbg, const std::unique_ptr<T>& ptr)
+{
+    dbg.space() << ptr.get();
+    return dbg.space();
+}
+
+QDebug operator<<(QDebug dbg, const Counter& ctrs)
+{
+    dbg.nospace() << "Polygons =" << ctrs.polygons << "lines=" << ctrs.lines;
+    return dbg.space();
+}
 
 static void
 overlay_rect(struct graphics_priv* parent, struct graphics_priv* overlay, int clean, QRect* r)
@@ -34,49 +83,50 @@ qt_offscreen_draw(struct graphics_priv* gr, const QRect* r, int paintev)
     static int count = 0;
     qDebug() << Q_FUNC_INFO << count++ << paintev;
     if (!paintev) {
-//        if (r->x() <= -r->width())
-//            return;
-//        if (r->y() <= -r->height())
-//            return;
-//        if (r->x() > gr->widget->pixmap->width())
-//            return;
-//        if (r->y() > gr->widget->pixmap->height())
-//            return;
-//        gr->widget->update(*r);
-//        qt_offscreen_draw(gr, r, 1);
+        //        if (r->x() <= -r->width())
+        //            return;
+        //        if (r->y() <= -r->height())
+        //            return;
+        //        if (r->x() > gr->widget->pixmap->width())
+        //            return;
+        //        if (r->y() > gr->widget->pixmap->height())
+        //            return;
+        //        gr->widget->update(*r);
+        //        qt_offscreen_draw(gr, r, 1);
         return;
     }
     qDebug() << "ASD";
-//    QPixmap pixmap(r->width(), r->height());
-//    QPainter painter(&pixmap);
+    //    QPixmap pixmap(r->width(), r->height());
+    //    QPainter painter(&pixmap);
     struct graphics_priv* overlay = nullptr;
     if (!gr->overlay_disable)
         overlay = gr->overlays;
     if ((gr->p.x || gr->p.y) && gr->background_gc) {
-//        painter.setPen(*gr->background_gc->pen);
-//        painter.fillRect(0, 0, gr->buffer->width(), gr->buffer->height(), *gr->background_gc->brush);
+        //        painter.setPen(*gr->background_gc->pen);
+        //        painter.fillRect(0, 0, gr->buffer->width(), gr->buffer->height(), *gr->background_gc->brush);
     }
-//    painter.drawPixmap(QPoint(gr->p.x, gr->p.y), *gr->buffer, *r);
-//    while (overlay) {
-//        QRect ovr;
-//        overlay_rect(gr, overlay, 0, &ovr);
-//        if (!overlay->overlay_disable && r->intersects(ovr)) {
-//            unsigned char* data;
-//            int i, size = ovr.width() * ovr.height();
-//            QImage img = overlay->buffer->toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
-//            data = img.bits();
-//            for (i = 0; i < size; i++) {
-//                if (data[0] == overlay->rgba[0] && data[1] == overlay->rgba[1] && data[2] == overlay->rgba[2])
-//                    data[3] = overlay->rgba[3];
-//                data += 4;
-//            }
-//            painter.drawImage(QPoint(ovr.x() - r->x(), ovr.y() - r->y()), img);
-//        }
-//        overlay = overlay->next;
-//    }
-    const QString frame = QString("/tmp/frame%1.png").arg(count);
-    qDebug() << "Saving frame " << frame;
-    gr->buffer->save(frame);
+    //    painter.drawPixmap(QPoint(gr->p.x, gr->p.y), *gr->buffer, *r);
+    //    while (overlay) {
+    //        QRect ovr;
+    //        overlay_rect(gr, overlay, 0, &ovr);
+    //        if (!overlay->overlay_disable && r->intersects(ovr)) {
+    //            unsigned char* data;
+    //            int i, size = ovr.width() * ovr.height();
+    //            QImage img = overlay->buffer->toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    //            data = img.bits();
+    //            for (i = 0; i < size; i++) {
+    //                if (data[0] == overlay->rgba[0] && data[1] == overlay->rgba[1] && data[2] == overlay->rgba[2])
+    //                    data[3] = overlay->rgba[3];
+    //                data += 4;
+    //            }
+    //            painter.drawImage(QPoint(ovr.x() - r->x(), ovr.y() - r->y()), img);
+    //        }
+    //        overlay = overlay->next;
+    //    }
+//    const QString frame = QString("/tmp/frame%1.png").arg(count);
+//    qDebug() << "Saving frame " << frame;
+    qDebug() << ctrs;
+//    gr->buffer->save(frame);
 }
 
 struct graphics_font_priv {
@@ -188,12 +238,13 @@ static struct graphics_image_priv* image_new(struct graphics_priv* gr, struct gr
 
 static void draw_lines(struct graphics_priv* gr, struct graphics_gc_priv* gc, struct point* p, int count)
 {
+    ctrs.lines++;
     int i;
-    QPolygon polygon;
+    static QPolygon polygon;
+    polygon.resize(count);
 
     for (i = 0; i < count; i++)
-        polygon.putPoints(i, 1, p[i].x, p[i].y);
-    qDebug() << "Drawing on painter" << gr->painter;
+        polygon.setPoint(i, p[i].x, p[i].y);
     gr->painter->setPen(*gc->pen);
     gr->painter->drawPolyline(polygon);
 }
@@ -202,12 +253,13 @@ static void draw_polygon(struct graphics_priv* gr, struct graphics_gc_priv* gc, 
 {
     int i;
     QPolygon polygon;
+    ctrs.polygons++;
 
     for (i = 0; i < count; i++)
         polygon.putPoints(i, 1, p[i].x, p[i].y);
     gr->painter->setPen(*gc->pen);
     gr->painter->setBrush(*gc->brush);
-    gr->painter->drawPolygon(polygon);
+    gr->painter->drawConvexPolygon(polygon);
 }
 
 static void draw_rectangle(struct graphics_priv* gr, struct graphics_gc_priv* gc, struct point* p, int w, int h)
@@ -223,7 +275,6 @@ static void draw_circle(struct graphics_priv* gr, struct graphics_gc_priv* gc, s
 
 static void draw_text(struct graphics_priv* gr, struct graphics_gc_priv* fg, struct graphics_gc_priv* bg, struct graphics_font_priv* font, char* text, struct point* p, int dx, int dy)
 {
-    QPainter* painter = gr->painter;
     struct font_freetype_text* t;
     struct font_freetype_glyph* g, **gp;
     struct color transparent = { 0x0000, 0x0000, 0x0000, 0x0000 };
@@ -246,8 +297,7 @@ static void draw_text(struct graphics_priv* gr, struct graphics_gc_priv* fg, str
                 QImage img(g->w + 2, g->h + 2, QImage::Format_ARGB32_Premultiplied);
                 data = img.bits();
                 gr->freetype_methods.get_shadow(g, (unsigned char*)data, 32, img.bytesPerLine(), bgc, &transparent);
-
-                painter->drawImage(((x + g->x) >> 6) - 1, ((y + g->y) >> 6) - 1, img);
+                gr->painter->drawImage(((x + g->x) >> 6) - 1, ((y + g->y) >> 6) - 1, img);
             }
             x += g->dx;
             y += g->dy;
@@ -265,7 +315,7 @@ static void draw_text(struct graphics_priv* gr, struct graphics_gc_priv* fg, str
             QImage img(g->w, g->h, QImage::Format_ARGB32_Premultiplied);
             data = img.bits();
             gr->freetype_methods.get_glyph(g, (unsigned char*)data, 32, img.bytesPerLine(), fgc, bgc, &transparent);
-            painter->drawImage((x + g->x) >> 6, (y + g->y) >> 6, img);
+            gr->painter->drawImage((x + g->x) >> 6, (y + g->y) >> 6, img);
         }
         x += g->dx;
         y += g->dy;
@@ -276,26 +326,6 @@ static void draw_text(struct graphics_priv* gr, struct graphics_gc_priv* fg, str
 static void draw_image(struct graphics_priv* gr, struct graphics_gc_priv* fg, struct point* p, struct graphics_image_priv* img)
 {
     gr->painter->drawPixmap(p->x, p->y, *img->pixmap);
-}
-
-static void draw_restore(struct graphics_priv* gr, struct point* p, int w, int h)
-{
-}
-
-static void
-draw_drag(struct graphics_priv* gr, struct point* p)
-{
-    qDebug() << Q_FUNC_INFO;
-    if (!gr->cleanup) {
-        gr->pclean = gr->p;
-        gr->cleanup = 1;
-    }
-    if (p)
-        gr->p = *p;
-    else {
-        gr->p.x = 0;
-        gr->p.y = 0;
-    }
 }
 
 static void background_gc(struct graphics_priv* gr, struct graphics_gc_priv* gc)
@@ -313,26 +343,28 @@ static void draw_mode(struct graphics_priv* gr, enum draw_mode_num mode)
     qDebug() << gr << mode;
     QRect r;
     if (mode == draw_mode_begin) {
+        ctrs.draw.start();
         if (gr->buffer->paintingActive()) {
             gr->buffer->paintEngine()->painter()->end();
         }
-        gr->painter->begin(gr->buffer);
+        gr->painter->begin(gr->buffer.get());
     }
     if (mode == draw_mode_end) {
         qDebug() << "Draw mode end" << gr->parent << gr->cleanup;
+        qDebug() << "Took" << ctrs.draw.elapsed() << " ms";
         gr->painter->end();
-//        if (gr->parent) {
-//            if (gr->cleanup) {
-//                overlay_rect(gr->parent, gr, 1, &r);
-//                qt_offscreen_draw(gr->parent, &r, 0);
-//                gr->cleanup = 0;
-//            }
-//            overlay_rect(gr->parent, gr, 0, &r);
-//            qt_offscreen_draw(gr, &r, 0);
-//        } else {
-//            r.setRect(0, 0, gr->buffer->width(), gr->buffer->height());
-//            qt_offscreen_draw(gr, &r, 0);
-//        }
+        //        if (gr->parent) {
+        //            if (gr->cleanup) {
+        //                overlay_rect(gr->parent, gr, 1, &r);
+        //                qt_offscreen_draw(gr->parent, &r, 0);
+        //                gr->cleanup = 0;
+        //            }
+        //            overlay_rect(gr->parent, gr, 0, &r);
+        //            qt_offscreen_draw(gr, &r, 0);
+        //        } else {
+        //            r.setRect(0, 0, gr->buffer->width(), gr->buffer->height());
+        //            qt_offscreen_draw(gr, &r, 0);
+        //        }
         overlay_rect(gr, gr, 0, &r);
         qt_offscreen_draw(gr, &r, 1);
 
@@ -342,7 +374,6 @@ static void draw_mode(struct graphics_priv* gr, enum draw_mode_num mode)
     gr->mode = mode;
 }
 
-static struct graphics_priv* overlay_new(struct graphics_priv* gr, struct graphics_methods* meth, struct point* p, int w, int h, int alpha, int wraparound);
 
 static int argc = 1;
 static char* argv[] = { nullptr, nullptr, nullptr };
@@ -350,6 +381,7 @@ static char* argv[] = { nullptr, nullptr, nullptr };
 static int
 fullscreen(struct window* win, int on)
 {
+    return 1;
 }
 
 static void
@@ -363,20 +395,20 @@ static void* get_data(struct graphics_priv* this_, const char* type)
     struct window* win;
     QString xid;
 
-//    if (!strcmp(type, "resize")) {
-//        dbg(lvl_debug, "resize %d %d\n", this_->w, this_->h);
-//        QSize size(this_->w, this_->h);
-//        this_->widget->do_resize(size);
-//    }
+    //    if (!strcmp(type, "resize")) {
+    //        dbg(lvl_debug, "resize %d %d\n", this_->w, this_->h);
+    //        QSize size(this_->w, this_->h);
+    //        this_->widget->do_resize(size);
+    //    }
 
-//    if (!strcmp(type, "qt_widget"))
-//        return this_->widget;
-//    if (!strcmp(type, "qt_pixmap"))
-//        return this_->widget->pixmap;
+    //    if (!strcmp(type, "qt_widget"))
+    //        return this_->widget;
+    //    if (!strcmp(type, "qt_pixmap"))
+    //        return this_->widget->pixmap;
     if (!strcmp(type, "window")) {
         win = new window;
-//        this_->buffer->paintEngine()->painter()->end();
-        callback_list_call_attr_2(this_->cbl, attr_resize, 800, 600);
+        //        this_->buffer->paintEngine()->painter()->end();
+        callback_list_call_attr_2(this_->cbl, attr_resize, width, height);
         win->priv = this_;
         win->fullscreen = fullscreen;
         win->disable_suspend = disable_suspend;
@@ -395,11 +427,9 @@ image_free(struct graphics_priv* gr, struct graphics_image_priv* priv)
 static void
 get_text_bbox(struct graphics_priv* gr, struct graphics_font_priv* font, char* text, int dx, int dy, struct point* ret, int estimate)
 {
-    qDebug() << Q_FUNC_INFO;
-    QPainter* painter = gr->painter;
     QString tmp = QString::fromUtf8(text);
-    painter->setFont(*font->font);
-    QRect r = painter->boundingRect(0, 0, gr->w, gr->h, 0, tmp);
+    gr->painter->setFont(*font->font);
+    QRect r = gr->painter->boundingRect(0, 0, gr->w, gr->h, 0, tmp);
     ret[0].x = 0;
     ret[0].y = -r.height();
     ret[1].x = 0;
@@ -424,14 +454,14 @@ static int set_attr(struct graphics_priv* gr, struct attr* attr)
         gr->w = attr->u.num;
         if (gr->w != 0 && gr->h != 0) {
             QSize size(gr->w, gr->h);
-//            gr->widget->do_resize(size);
+            //            gr->widget->do_resize(size);
         }
         break;
     case attr_h:
         gr->h = attr->u.num;
         if (gr->w != 0 && gr->h != 0) {
             QSize size(gr->w, gr->h);
-//            gr->widget->do_resize(size);
+            //            gr->widget->do_resize(size);
         }
         break;
     default:
@@ -450,8 +480,8 @@ static struct graphics_methods graphics_methods = {
     draw_text,
     draw_image,
     nullptr,
-    draw_restore,
-    draw_drag,
+    nullptr,
+    nullptr,
     font_new,
     gc_new,
     background_gc,
@@ -463,7 +493,6 @@ static struct graphics_methods graphics_methods = {
     overlay_disable,
     nullptr,
     set_attr,
-
 };
 
 static struct graphics_priv* overlay_new(struct graphics_priv* gr, struct graphics_methods* meth, struct point* p, int w, int h, int alpha, int wraparound)
@@ -478,7 +507,7 @@ static struct graphics_priv* overlay_new(struct graphics_priv* gr, struct graphi
         meth->get_text_bbox = (void (*)(struct graphics_priv*, struct graphics_font_priv*, char*, int, int, struct point*, int))ret->freetype_methods.get_text_bbox;
     }
     ret->wraparound = wraparound;
-    ret->painter = new QPainter;
+    ret->painter.reset(new QPainter);
     ret->p = *p;
     ret->parent = gr;
     ret->next = gr->overlays;
@@ -497,7 +526,6 @@ event_qt_main_loop_run(void)
 
 static void event_qt_main_loop_quit(void)
 {
-    qDebug() << Q_FUNC_INFO;
     exit(0);
 }
 
@@ -508,16 +536,16 @@ event_qt_add_watch(int fd, enum event_watch_cond cond, struct callback* cb)
     struct event_watch* ret = new event_watch;
     ret->fd = fd;
     ret->cb = cb;
-//    g_hash_table_insert(event_gr->widget->watches, GINT_TO_POINTER(fd), ret);
-//    ret->sn = new QSocketNotifier(fd, QSocketNotifier::Read, event_gr->widget);
-//    QObject::connect(ret->sn, SIGNAL(activated(int)), event_gr->widget, SLOT(watchEvent(int)));
+    //    g_hash_table_insert(event_gr->widget->watches, GINT_TO_POINTER(fd), ret);
+    //    ret->sn = new QSocketNotifier(fd, QSocketNotifier::Read, event_gr->widget);
+    //    QObject::connect(ret->sn, SIGNAL(activated(int)), event_gr->widget, SLOT(watchEvent(int)));
     return ret;
 }
 
 static void
 event_qt_remove_watch(struct event_watch* ev)
 {
-//    g_hash_table_remove(event_gr->widget->watches, GINT_TO_POINTER(ev->fd));
+    //    g_hash_table_remove(event_gr->widget->watches, GINT_TO_POINTER(ev->fd));
     delete ev->sn;
     delete ev;
 }
@@ -526,18 +554,18 @@ static struct event_timeout*
 event_qt_add_timeout(int timeout, int multi, struct callback* cb)
 {
     int id;
-//    id = event_gr->widget->startTimer(timeout);
-//    g_hash_table_insert(event_gr->widget->timer_callback, (void*)id, cb);
-//    g_hash_table_insert(event_gr->widget->timer_type, (void*)id, (void*)!!multi);
+    //    id = event_gr->widget->startTimer(timeout);
+    //    g_hash_table_insert(event_gr->widget->timer_callback, (void*)id, cb);
+    //    g_hash_table_insert(event_gr->widget->timer_type, (void*)id, (void*)!!multi);
     return (struct event_timeout*)id;
 }
 
 void
 event_qt_remove_timeout(struct event_timeout* ev)
 {
-//    event_gr->widget->killTimer((int)(long) ev);
-//    g_hash_table_remove(event_gr->widget->timer_callback, ev);
-//    g_hash_table_remove(event_gr->widget->timer_type, ev);
+    //    event_gr->widget->killTimer((int)(long) ev);
+    //    g_hash_table_remove(event_gr->widget->timer_callback, ev);
+    //    g_hash_table_remove(event_gr->widget->timer_type, ev);
 }
 
 static struct event_idle*
@@ -604,15 +632,15 @@ static struct graphics_priv* graphics_qt_offscreen_new(struct navit* nav, struct
     meth->font_new = (struct graphics_font_priv * (*)(struct graphics_priv*, struct graphics_font_methods*, char*, int, int))ret->freetype_methods.font_new;
     meth->get_text_bbox = (void (*)(struct graphics_priv*, struct graphics_font_priv*, char*, int, int, struct point*, int))ret->freetype_methods.get_text_bbox;
 
-    ret->app = new QApplication(argc, argv);
-    ret->buffer = new QPixmap(800,600);
+    ret->app.reset(new QApplication(argc, argv));
+    ret->buffer.reset(new QPixmap(width, height));
     ret->buffer->fill();
-    ret->painter = new QPainter (ret->buffer);
+    ret->painter.reset(new QPainter(ret->buffer.get()));
     qDebug() << "Crated pixmap" << ret->buffer << "and painter" << ret->painter;
-    ret->painter->fillRect(0,0,800,600, QBrush());
+    ret->painter->fillRect(0, 0, width, height, QBrush());
     event_gr = ret;
-    ret->w = 800;
-    ret->h = 600;
+    ret->w = width;
+    ret->h = height;
     if ((attr = attr_search(attrs, nullptr, attr_w)))
         ret->w = attr->u.num;
     if ((attr = attr_search(attrs, nullptr, attr_h)))
@@ -626,10 +654,10 @@ static struct graphics_priv* graphics_qt_offscreen_new(struct navit* nav, struct
     return ret;
 }
 
+extern "C" {
 void plugin_init(void)
 {
     plugin_register_graphics_type("qt_offscreen", graphics_qt_offscreen_new);
     plugin_register_event_type("qt", event_qt_new);
 }
-
-// *** EOF ***
+}
