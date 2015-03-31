@@ -105,6 +105,8 @@ struct NavitControllerPrivate {
 
         boost::fusion::make_pair<DownloadMessage>([this](const JSONMessage& message) {
             // Janusz start download here
+            const std::string region = message.data.get<std::string>("region");
+            nTrace() << "Download message with region";
         }),
     };
 
