@@ -31,7 +31,8 @@ struct NavitControllerPrivate {
                 boost::fusion::make_pair<RenderMessage>("render"),
                 boost::fusion::make_pair<ExitMessage>("exit"),
                 boost::fusion::make_pair<SetOrientationMessage>("setOrientation"),
-                boost::fusion::make_pair<OrientationMessage>("orientation")
+                boost::fusion::make_pair<OrientationMessage>("orientation"),
+                boost::fusion::make_pair<DownloadMessage>("download")
               };
 
     map_cb_type cb{
@@ -100,6 +101,10 @@ struct NavitControllerPrivate {
             p.put("orientation", ipc->orientation());
             JSONMessage response {message.id, message.call, "", p };
             successSignal(response);
+        }),
+
+        boost::fusion::make_pair<DownloadMessage>([this](const JSONMessage& message) {
+            // Janusz start download here
         }),
     };
 

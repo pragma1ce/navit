@@ -25,11 +25,13 @@ struct RenderMessage {};
 struct ExitMessage {};
 struct SetOrientationMessage {};
 struct OrientationMessage {};
+struct DownloadMessage {};
 
 // Container of all registered messages
 typedef boost::mpl::vector<MoveByMessage, ZoomByMessage, ZoomMessage,
                            PositionMessage, RenderMessage, ExitMessage,
-                           SetOrientationMessage, OrientationMessage
+                           SetOrientationMessage, OrientationMessage,
+                           DownloadMessage
 
     > Messages_type;
 typedef std::function<void (const NXE::JSONMessage &data)> JSONMessageParser_type;
@@ -64,4 +66,5 @@ typedef typename boost::fusion::result_of::as_map
                 make_cb_pair<boost::mpl::_1>
             >::type
     >::type map_cb_type;
+
 #endif
