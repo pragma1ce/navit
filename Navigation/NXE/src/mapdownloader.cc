@@ -8,11 +8,15 @@
 
 #include <iostream>
 #include "mapdownloader.h"
+#include "mapdesc.h"
+#include "log.h"
+
 using namespace std;
 
 
 MapDownloader::MapDownloader() {
 	m_mapFilePath = "/home/jlr02";
+	m_mapDescFilePath = "/home/jlr02/osm_maps.xml";
 	m_reportProgess = false;
 }
 
@@ -71,17 +75,39 @@ int MapDownloader::onDownloadProgress(void *clientp,   curl_off_t dltotal,   cur
 	return CURLE_OK;
 }
 
-const char* MapDownloader::createMapRequestString(std::string name) {
+long MapDownloader::getEstimatedSize(const std::string& name) {
+	MapDesc mdesc;
+	MapData m;
 
-	return "http://maps5.navit-project.org/api/map/?bbox=20.9,52.2,21.0,52.3&timestamp=150320";
+	if (mdesc.getMapData(name, m_mapDescFilePath, m))
+		return m.size;
+	else
+		return 0;
+}
+
+const char* MapDownloader::createMapRequestString(const std::string& name) {
+
+	MapDesc mdesc;
+	MapData m;
+
+	std::string res = "http://maps5.navit-project.org/api/map/?bbox=";
+
+	if (mdesc.getMapData(name, m_mapDescFilePath, m)) {
+		res += m.lon1 + "," + m.lat1+ "," + m.lon2 + "," + m.lat2 + "&timestamp=150320";
+	} else	return NULL;
+
+	nDebug() << "createMapRequestString : " << res;
+
+	return res.c_str();
 }
 
 CbOnError MapDownloader::cbOnError = 0;
 CbOnProgress MapDownloader::cbOnProgress = 0;
 
-int MapDownloader::download(std::string name) {
+bool MapDownloader::download(const std::string& name) {
 	CURL *curl;
 	CURLcode res;
+	bool downloaded=false;
 
 	std::string mapFileName = m_mapFilePath + "/" + name + ".bin";
 
@@ -92,13 +118,21 @@ int MapDownloader::download(std::string name) {
 
 	nDebug() << "file name: " <<  mapfile.filename;
 
+	const char* reqs = createMapRequestString(name);
+
+	if (reqs == NULL) {
+		cbOnError(MAP_ERR_STR);
+		return downloaded;
+	}
+
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
 	curl = curl_easy_init();
 
+
 	if (curl) {
 
-		curl_easy_setopt(curl, CURLOPT_URL, createMapRequestString(name));
+		curl_easy_setopt(curl, CURLOPT_URL, reqs);
 
 	    /* Define our callback to get called when there's data to be written */
 	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dataWrite);
@@ -115,6 +149,8 @@ int MapDownloader::download(std::string name) {
 
 	    if (res != CURLE_OK)
 	    	onDownloadError(res);
+	    else
+	    	downloaded=true;
 
 	    /* always cleanup */
 	    curl_easy_cleanup(curl);
@@ -125,6 +161,6 @@ int MapDownloader::download(std::string name) {
 
 	  curl_global_cleanup();
 
-	  return 0;
+	  return downloaded;
 }
 

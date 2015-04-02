@@ -14,6 +14,7 @@
 #define WRITE_FILE_ERR_STR "ERROR_WRITE"
 #define TIMEOUT_ERR_STR    "ERROR_TIMEOUT"
 #define CONNECTION_ERR_STR "ERROR_CONNECTION"
+#define MAP_ERR_STR 	   "ERROR_MAP"
 #define UNKNOWN_ERR_STR    "ERROR_UNKNOWN"
 
 
@@ -22,18 +23,17 @@ struct MapFile {
   FILE *stream;
 };
 
-typedef void (*CbOnError)(std::string);
-typedef void (*CbOnProgress)(long, long);
 
-//static   CbOnError cbErrNULL = NULL;
-//static   CbOnProgress cbProgressNULL = NULL;
+typedef void (*CbOnError)(const std::string&);
+typedef void (*CbOnProgress)(long, long);
 
 
 class MapDownloader {
 public:
 	MapDownloader();
 
-	int download(std::string name);
+	bool download(const std::string& name);
+	long getEstimatedSize(const std::string& name);
 
 	virtual ~MapDownloader();
 
@@ -41,12 +41,12 @@ public:
 		m_reportProgess = flag;
 	}
 
-	inline void setMapFileDir(std::string dir) {
+	inline void setMapFileDir(const std::string& dir) {
 		m_mapFilePath = dir;
 	}
 
-	inline void setMapDescFileDir(std::string dir) {
-		m_mapDescFilePath = dir;
+	inline void setMapDescFilePath(const std::string& path) {
+		m_mapDescFilePath = path;
 	}
 
 	inline void setCbError(CbOnError cb) {
@@ -70,7 +70,7 @@ private:
 	static std::string getDownloadErrorStr(CURLcode err);
 
 
-	const char* createMapRequestString(std::string name);
+	const char* createMapRequestString(const std::string& name);
 
 	std::string m_mapFilePath;
 	std::string m_mapDescFilePath;

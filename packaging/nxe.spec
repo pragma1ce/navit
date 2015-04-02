@@ -16,6 +16,7 @@ BuildRequires: 	boost-devel
 BuildRequires:  cmake
 BuildRequires:  dbus-glib-devel
 BuildRequires:  libdbus-c++-devel
+BuildRequires:  curl
 
 Requires:	dbus
 Requires:	dbus-glib

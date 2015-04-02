@@ -22,6 +22,9 @@ find_package(DBusCpp REQUIRED)
 include_directories(${DBUS_INCLUDE_DIR} ${DBUS_ARCH_INCLUDE_DIR} ${DBUSCPP_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+# find curl
+find_package(curl REQUIRED)
+
 set (dbus_library navitdbus.cc)
 
 set(nxe_interfaces
@@ -52,6 +55,10 @@ set(NXE_SRCS
 
     # tizen-extension-crosswalk sources
     ../tec/common/extension.cc
+    
+    # map download sources
+    mapdownloader.cc
+    mapdesc.cc
 
     # generated sources
     ${CMAKE_BINARY_DIR}/src/generated_api.cc
